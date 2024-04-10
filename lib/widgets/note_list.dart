@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:notes/models/note.dart';
 import 'package:notes/providers/multiple_selection_function.dart';
+import 'package:notes/widgets/note_grid_view_item.dart';
 import 'package:notes/widgets/note_item.dart';
 
 class NoteList extends ConsumerStatefulWidget {
@@ -22,6 +23,7 @@ class NoteList extends ConsumerStatefulWidget {
 class _NoteListState extends ConsumerState<NoteList> {
   bool _isAscendingOrder = true;
   bool _isMultiPleSelectorVisible = false;
+  String _selectingViewStyle = 'list';
   final Set<Note> _selectedNote = HashSet();
 
   void _sortNotes(String sortType) {
@@ -87,97 +89,142 @@ class _NoteListState extends ConsumerState<NoteList> {
 
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            const Spacer(),
-            DropdownMenu(
-              initialSelection: selectingValue,
-              dropdownMenuEntries: const [
-                DropdownMenuEntry(
-                  value: 'Tiêu đề',
-                  label: 'Tiêu đề',
+        IntrinsicHeight(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectingViewStyle = 'grid';
+                    });
+                  },
+                  icon: const Icon(Icons.grid_view_outlined),
                 ),
-                DropdownMenuEntry(
-                  value: 'Ngày tạo',
-                  label: 'Ngày tạo',
-                ),
-                DropdownMenuEntry(
-                  value: 'Ngày sửa đổi',
-                  label: 'Ngày sửa đổi',
-                ),
-              ],
-              onSelected: (value) {
-                setState(() {
-                  selectingValue = value!;
-                  _sortNotes(value);
-                });
-              },
-            ),
-            IconButton(
-              tooltip: _isAscendingOrder ? 'Giảm dần' : 'Tăng dần',
-              onPressed: () {
-                setState(() {
-                  _isAscendingOrder = !_isAscendingOrder;
-                  _sortNotes(selectingValue);
-                });
-              },
-              icon: Icon(
-                _isAscendingOrder
-                    ? Icons.arrow_downward_rounded
-                    : Icons.arrow_upward_rounded,
               ),
-            )
-          ],
-        ),
-        const SizedBox(height: 20),
-        Expanded(
-          child: ListView.builder(
-            itemCount: widget.noteList.length,
-            padding: const EdgeInsets.all(13),
-            itemBuilder: (context, index) => InkWell(
-              onLongPress: () {
-                setState(() {
-                  _isMultiPleSelectorVisible = !_isMultiPleSelectorVisible;
-                  _selectedNote.clear();
-                  ref
-                      .read(multipleSelectionFunctionProvider.notifier)
-                      .showScreen(_isMultiPleSelectorVisible);
-                });
-              },
-              child: Stack(
-                children: [
-                  AbsorbPointer(
-                    absorbing: _isMultiPleSelectorVisible,
-                    child: NoteItem(
-                      key: ValueKey(widget.noteList[index].id),
-                      note: widget.noteList[index],
-                    ),
+              const VerticalDivider(
+                width: 3,
+                thickness: 1,
+                indent: 20,
+                endIndent: 16,
+                color: Colors.grey,
+              ),
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _selectingViewStyle = 'list';
+                  });
+                },
+                icon: const Icon(Icons.view_list_outlined),
+              ),
+              const Spacer(),
+              DropdownMenu(
+                initialSelection: selectingValue,
+                dropdownMenuEntries: const [
+                  DropdownMenuEntry(
+                    value: 'Tiêu đề',
+                    label: 'Tiêu đề',
                   ),
-                  Visibility(
-                    visible: _isMultiPleSelectorVisible,
-                    child: Align(
-                      alignment: Alignment.topRight,
-                      child: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            doMultipleSelection(widget.noteList[index]);
-                          });
-                        },
-                        icon: !_selectedNote.contains(widget.noteList[index])
-                            ? const Icon(Icons.circle_outlined)
-                            : const Icon(
-                                Icons.check_circle,
-                                color: Colors.red,
-                              ),
-                      ),
-                    ),
+                  DropdownMenuEntry(
+                    value: 'Ngày tạo',
+                    label: 'Ngày tạo',
+                  ),
+                  DropdownMenuEntry(
+                    value: 'Ngày sửa đổi',
+                    label: 'Ngày sửa đổi',
                   ),
                 ],
+                onSelected: (value) {
+                  setState(() {
+                    selectingValue = value!;
+                    _sortNotes(value);
+                  });
+                },
+              ),
+              IconButton(
+                tooltip: _isAscendingOrder ? 'Giảm dần' : 'Tăng dần',
+                onPressed: () {
+                  setState(() {
+                    _isAscendingOrder = !_isAscendingOrder;
+                    _sortNotes(selectingValue);
+                  });
+                },
+                icon: Icon(
+                  _isAscendingOrder
+                      ? Icons.arrow_downward_rounded
+                      : Icons.arrow_upward_rounded,
+                ),
+              )
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        if (_selectingViewStyle == 'list')
+          Expanded(
+            child: ListView.builder(
+              itemCount: widget.noteList.length,
+              padding: const EdgeInsets.all(13),
+              itemBuilder: (context, index) => InkWell(
+                onLongPress: () {
+                  setState(() {
+                    _isMultiPleSelectorVisible = !_isMultiPleSelectorVisible;
+                    _selectedNote.clear();
+                    ref
+                        .read(multipleSelectionFunctionProvider.notifier)
+                        .showScreen(_isMultiPleSelectorVisible);
+                  });
+                },
+                child: Stack(
+                  children: [
+                    AbsorbPointer(
+                      absorbing: _isMultiPleSelectorVisible,
+                      child: NoteItem(
+                        key: ValueKey(widget.noteList[index].id),
+                        note: widget.noteList[index],
+                      ),
+                    ),
+                    Visibility(
+                      visible: _isMultiPleSelectorVisible,
+                      child: Align(
+                        alignment: Alignment.topRight,
+                        child: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              doMultipleSelection(widget.noteList[index]);
+                            });
+                          },
+                          icon: !_selectedNote.contains(widget.noteList[index])
+                              ? const Icon(Icons.circle_outlined)
+                              : const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.red,
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        )
+          )
+        else
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              itemCount: widget.noteList.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 20,
+                childAspectRatio: 0.8,
+              ),
+              itemBuilder: (context, index) {
+                return NoteGridViewItem(note: widget.noteList[index]);
+              },
+            ),
+          )
       ],
     );
   }
