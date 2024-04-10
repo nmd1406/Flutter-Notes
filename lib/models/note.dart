@@ -18,12 +18,12 @@ class Note {
     required this.dateCreated,
   }) : id = uuid.v4();
 
-  String getCreatedDate() {
-    return simpleFormatter.format(dateCreated);
+  String getSimpleDate(DateTime date) {
+    return simpleFormatter.format(date);
   }
 
-  String getEditedDate() {
-    return detailFormatter.format(dateEdited!);
+  String getDetailDate(DateTime date) {
+    return detailFormatter.format(date);
   }
 
   void setNewTitle(String title) {

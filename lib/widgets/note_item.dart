@@ -37,14 +37,14 @@ class NoteItem extends StatelessWidget {
               ),
               if (note.dateEdited != null)
                 Text(
-                  'Lần sửa đổi cuối: ${note.getEditedDate()}',
+                  'Lần sửa đổi cuối: ${note.getDetailDate(note.dateEdited!)}',
                   style: Theme.of(context).textTheme.bodySmall!.copyWith(
                         fontStyle: FontStyle.italic,
                       ),
                 ),
             ],
           ),
-          trailing: Text(note.getCreatedDate()),
+          trailing: Text(note.getSimpleDate(note.dateCreated)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

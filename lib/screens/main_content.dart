@@ -86,10 +86,15 @@ class MainContentScreen extends ConsumerWidget {
         ),
       ),
       bottomNavigationBar: isMultipleSelectionVisible && selectedNotesCount > 0
-          ? NavigationBar(destinations: [
-              IconButton(onPressed: () {}, icon: Icon(Icons.abc)),
-              Container()
-            ])
+          ? NavigationBar(
+              destinations: [
+                IconButton(
+                  onPressed: () {},
+                  icon: const Icon(Icons.abc),
+                ),
+                Container()
+              ],
+            )
           : null,
     );
   }
