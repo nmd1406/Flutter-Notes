@@ -45,7 +45,12 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
             tooltip: 'Lưu',
             onPressed: _saveNewNote,
             icon: const Icon(Icons.save),
-          )
+          ),
+          IconButton(
+            tooltip: 'Đính kèm tệp',
+            onPressed: () {},
+            icon: const Icon(Icons.attach_file_rounded),
+          ),
         ],
         title: TextField(
           controller: _titleController,

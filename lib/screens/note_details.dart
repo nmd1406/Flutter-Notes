@@ -1,7 +1,12 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notes/models/note.dart';
 import 'package:notes/providers/notes_provider.dart';
+import 'package:notes/widgets/files_grid_view.dart';
+import 'package:path_provider/path_provider.dart';
 
 class NoteDetailsScreen extends ConsumerStatefulWidget {
   final Note note;
@@ -74,6 +79,30 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
     });
   }
 
+  void _pickFiles() async {
+    final result = await FilePicker.platform.pickFiles(allowMultiple: true);
+    if (result == null) {
+      return;
+    }
+
+    _openFiles(result.files);
+  }
+
+  void _openFiles(List<PlatformFile> files) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => FileGridView(files: files),
+      ),
+    );
+  }
+
+  Future<File> _saveFile(PlatformFile file) {
+    final appDir = getApplicationDocumentsDirectory();
+    final newFile = File('$appDir/${file.name}');
+
+    return File(file.path!).copy(newFile.path);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,6 +127,12 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
               tooltip: 'Lưu thay đổi',
               onPressed: _saveEditedNote,
               icon: const Icon(Icons.save),
+            ),
+          if (_isEditing)
+            IconButton(
+              tooltip: 'Đính kèm tệp',
+              onPressed: _pickFiles,
+              icon: const Icon(Icons.attach_file_rounded),
             ),
           IconButton(
             tooltip: 'Tìm kiếm',
