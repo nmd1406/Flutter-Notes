@@ -95,13 +95,18 @@ class _NoteListState extends ConsumerState<NoteList> {
             children: [
               Padding(
                 padding: const EdgeInsets.only(left: 8),
-                child: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectingViewStyle = 'grid';
-                    });
-                  },
-                  icon: const Icon(Icons.grid_view_outlined),
+                child: CircleAvatar(
+                  backgroundColor: _selectingViewStyle == 'grid'
+                      ? Colors.black12
+                      : Colors.transparent,
+                  child: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectingViewStyle = 'grid';
+                      });
+                    },
+                    icon: const Icon(Icons.grid_view_outlined),
+                  ),
                 ),
               ),
               const VerticalDivider(
@@ -111,13 +116,18 @@ class _NoteListState extends ConsumerState<NoteList> {
                 endIndent: 16,
                 color: Colors.grey,
               ),
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _selectingViewStyle = 'list';
-                  });
-                },
-                icon: const Icon(Icons.view_list_outlined),
+              CircleAvatar(
+                backgroundColor: _selectingViewStyle == 'list'
+                    ? Colors.black12
+                    : Colors.transparent,
+                child: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectingViewStyle = 'list';
+                    });
+                  },
+                  icon: const Icon(Icons.view_list_outlined),
+                ),
               ),
               const Spacer(),
               DropdownMenu(
@@ -220,9 +230,47 @@ class _NoteListState extends ConsumerState<NoteList> {
                 crossAxisSpacing: 20,
                 childAspectRatio: 0.8,
               ),
-              itemBuilder: (context, index) {
-                return NoteGridViewItem(note: widget.noteList[index]);
-              },
+              itemBuilder: (context, index) => InkWell(
+                onLongPress: () {
+                  setState(() {
+                    _isMultiPleSelectorVisible = !_isMultiPleSelectorVisible;
+                    _selectedNote.clear();
+                    ref
+                        .read(multipleSelectionFunctionProvider.notifier)
+                        .showScreen(_isMultiPleSelectorVisible);
+                  });
+                },
+                child: Stack(
+                  children: [
+                    AbsorbPointer(
+                      absorbing: _isMultiPleSelectorVisible,
+                      child: NoteGridViewItem(
+                        key: ValueKey(widget.noteList[index].id),
+                        note: widget.noteList[index],
+                      ),
+                    ),
+                    Visibility(
+                      visible: _isMultiPleSelectorVisible,
+                      child: Align(
+                        alignment: Alignment.topRight,
+                        child: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              doMultipleSelection(widget.noteList[index]);
+                            });
+                          },
+                          icon: !_selectedNote.contains(widget.noteList[index])
+                              ? const Icon(Icons.circle_outlined)
+                              : const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.red,
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           )
       ],
