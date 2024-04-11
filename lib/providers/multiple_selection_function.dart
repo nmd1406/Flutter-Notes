@@ -14,16 +14,16 @@ final multipleSelectionFunctionProvider =
   (ref) => MultipleSelectionFunctionNotifier(),
 );
 
-class SelectedNoteNotifier extends StateNotifier<Set<Note>> {
-  SelectedNoteNotifier() : super({});
+class SelectedNoteNotifier extends StateNotifier<List<Note>> {
+  SelectedNoteNotifier() : super([]);
 
-  void updateSelectedNotes(Set<Note> notes) {
+  void updateSelectedNotes(List<Note> notes) {
     state = notes;
   }
 }
 
 final selectedNoteProvider =
-    StateNotifierProvider<SelectedNoteNotifier, Set<Note>>(
+    StateNotifierProvider<SelectedNoteNotifier, List<Note>>(
         (ref) => SelectedNoteNotifier());
 
 class SelectedNotesCountNotifier extends StateNotifier<int> {

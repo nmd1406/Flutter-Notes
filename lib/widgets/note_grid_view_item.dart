@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:notes/models/note.dart';
 import 'package:notes/screens/note_details.dart';
@@ -15,36 +17,57 @@ class NoteGridViewItem extends StatelessWidget {
     return Column(
       children: [
         Expanded(
-          child: SizedBox(
-            width: double.infinity,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(19),
-              child: Card(
-                elevation: 4,
-                color: Colors.yellow,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    note.content,
-                    maxLines: 7,
-                    softWrap: true,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyLarge,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: Stack(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  height: double.infinity,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(19),
+                    child: Card(
+                      elevation: 4,
+                      color: Colors.yellow,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          note.content,
+                          maxLines: 7,
+                          softWrap: true,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => NoteDetailsScreen(note: note),
+                        ),
+                      );
+                    },
                   ),
                 ),
-              ),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => NoteDetailsScreen(note: note),
+                if (note.isLocked)
+                  Positioned.fill(
+                    child: BackdropFilter(
+                      filter: ui.ImageFilter.blur(
+                        sigmaX: 10,
+                        sigmaY: 10,
+                      ),
+                      child: Container(
+                        color: Colors.transparent,
+                        child: const Icon(Icons.lock),
+                      ),
+                    ),
                   ),
-                );
-              },
+              ],
             ),
           ),
         ),
         Text(
-          note.title,
+          note.isLocked ? 'Ghi chú bị khoá' : note.title,
           maxLines: 1,
           softWrap: true,
           overflow: TextOverflow.ellipsis,

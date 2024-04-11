@@ -1,7 +1,7 @@
-import 'dart:collection';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:local_auth/local_auth.dart';
 
 import 'package:notes/models/note.dart';
 import 'package:notes/providers/multiple_selection_function.dart';
@@ -24,7 +24,16 @@ class _NoteListState extends ConsumerState<NoteList> {
   bool _isAscendingOrder = true;
   bool _isMultiPleSelectorVisible = false;
   String _selectingViewStyle = 'list';
-  final Set<Note> _selectedNote = HashSet();
+  final List<Note> _selectedNote = [];
+  String _selectingValue = 'Tiêu đề';
+
+  late final LocalAuthentication auth;
+
+  @override
+  void initState() {
+    super.initState();
+    auth = LocalAuthentication();
+  }
 
   void _sortNotes(String sortType) {
     if (sortType == 'Tiêu đề') {
@@ -83,10 +92,26 @@ class _NoteListState extends ConsumerState<NoteList> {
     ref.watch(selectedNotesCountProvider.notifier).update(_selectedNote.length);
   }
 
+  Future<void> _authenticate(Note note) async {
+    try {
+      bool authenticate = await auth.authenticate(
+        localizedReason: 'Quét vân tay để mở khoá',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+        ),
+      );
+      if (authenticate) {
+        setState(() {
+          note.toggleNoteLocker();
+        });
+      }
+    } on PlatformException {
+      //
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    String selectingValue = 'Tiêu đề';
-
     return Column(
       children: [
         IntrinsicHeight(
@@ -112,8 +137,8 @@ class _NoteListState extends ConsumerState<NoteList> {
               const VerticalDivider(
                 width: 3,
                 thickness: 1,
-                indent: 20,
-                endIndent: 16,
+                indent: 12,
+                endIndent: 12,
                 color: Colors.grey,
               ),
               CircleAvatar(
@@ -130,25 +155,26 @@ class _NoteListState extends ConsumerState<NoteList> {
                 ),
               ),
               const Spacer(),
-              DropdownMenu(
-                initialSelection: selectingValue,
-                dropdownMenuEntries: const [
-                  DropdownMenuEntry(
+              DropdownButton(
+                borderRadius: BorderRadius.circular(12),
+                value: _selectingValue,
+                items: const [
+                  DropdownMenuItem(
                     value: 'Tiêu đề',
-                    label: 'Tiêu đề',
+                    child: Text('Tiêu đề'),
                   ),
-                  DropdownMenuEntry(
+                  DropdownMenuItem(
                     value: 'Ngày tạo',
-                    label: 'Ngày tạo',
+                    child: Text('Ngày tạo'),
                   ),
-                  DropdownMenuEntry(
+                  DropdownMenuItem(
                     value: 'Ngày sửa đổi',
-                    label: 'Ngày sửa đổi',
+                    child: Text('Ngày sửa đổi'),
                   ),
                 ],
-                onSelected: (value) {
+                onChanged: (value) {
                   setState(() {
-                    selectingValue = value!;
+                    _selectingValue = value!;
                     _sortNotes(value);
                   });
                 },
@@ -158,7 +184,7 @@ class _NoteListState extends ConsumerState<NoteList> {
                 onPressed: () {
                   setState(() {
                     _isAscendingOrder = !_isAscendingOrder;
-                    _sortNotes(selectingValue);
+                    _sortNotes(_selectingValue);
                   });
                 },
                 icon: Icon(
@@ -185,6 +211,12 @@ class _NoteListState extends ConsumerState<NoteList> {
                         .read(multipleSelectionFunctionProvider.notifier)
                         .showScreen(_isMultiPleSelectorVisible);
                   });
+                },
+                onTap: () {
+                  if (!widget.noteList[index].isLocked) {
+                    return;
+                  }
+                  _authenticate(widget.noteList[index]);
                 },
                 child: Stack(
                   children: [
@@ -239,6 +271,12 @@ class _NoteListState extends ConsumerState<NoteList> {
                         .read(multipleSelectionFunctionProvider.notifier)
                         .showScreen(_isMultiPleSelectorVisible);
                   });
+                },
+                onTap: () {
+                  if (!widget.noteList[index].isLocked) {
+                    return;
+                  }
+                  _authenticate(widget.noteList[index]);
                 },
                 child: Stack(
                   children: [

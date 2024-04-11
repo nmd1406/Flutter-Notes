@@ -11,12 +11,14 @@ class Note {
   String content;
   final DateTime dateCreated;
   DateTime? dateEdited;
+  bool isLocked;
 
   Note({
     required this.title,
     required this.content,
     required this.dateCreated,
-  }) : id = uuid.v4();
+  })  : id = uuid.v4(),
+        isLocked = false;
 
   String getSimpleDate(DateTime date) {
     return simpleFormatter.format(date);
@@ -36,5 +38,9 @@ class Note {
 
   void setNewContent(String content) {
     this.content = content;
+  }
+
+  void toggleNoteLocker() {
+    isLocked = !isLocked;
   }
 }

@@ -22,6 +22,13 @@ class NotesNotifier extends StateNotifier<List<Note>> {
     notes[index].setDateEdited(dateEdited);
     state = [...notes];
   }
+
+  void toggleNoteLocker(Note note) {
+    List<Note> notes = state;
+    int index = notes.indexOf(note);
+    notes[index].toggleNoteLocker();
+    state = [...notes];
+  }
 }
 
 final notesProvider = StateNotifierProvider<NotesNotifier, List<Note>>(

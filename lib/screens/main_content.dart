@@ -10,6 +10,15 @@ import 'package:notes/widgets/note_list.dart';
 class MainContentScreen extends ConsumerWidget {
   const MainContentScreen({super.key});
 
+  void _noteLocker(WidgetRef ref) {
+    final selectedNotes = ref.read(selectedNoteProvider);
+    for (var note in selectedNotes) {
+      ref.watch(notesProvider.notifier).toggleNoteLocker(note);
+    }
+
+    ref.watch(selectedNoteProvider.notifier).updateSelectedNotes(selectedNotes);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isMultipleSelectionVisible =
@@ -88,11 +97,23 @@ class MainContentScreen extends ConsumerWidget {
       bottomNavigationBar: isMultipleSelectionVisible && selectedNotesCount > 0
           ? NavigationBar(
               destinations: [
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.abc),
+                TextButton.icon(
+                  onPressed: () {
+                    _noteLocker(ref);
+                  },
+                  icon: const Icon(Icons.lock),
+                  label: const Text('Khoá'),
                 ),
-                Container()
+                TextButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.delete),
+                  label: const Text('Xoá'),
+                ),
+                TextButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.star_border),
+                  label: const Text('Thêm vào mục yêu thích'),
+                )
               ],
             )
           : null,
