@@ -1,6 +1,6 @@
 # Flutter Notes Android App (incomplete)
 Main tasks:
-1. Cho phép thêm hình ảnh, file đính kèm vào trong ghi chú.
+1. Cho phép thêm hình ảnh, file đính kèm vào trong ghi chú. (chiu)
 2. Cho phép hiển thị vị trí thực hiện ghi chú thông qua location services.
 3. Cho phép lựa chọn ẩn ghi chú và cần có xác thực mới hiển thị.
 
