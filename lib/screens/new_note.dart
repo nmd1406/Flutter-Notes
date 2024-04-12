@@ -31,7 +31,7 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
 
     ref
         .watch(notesProvider.notifier)
-        .addNewNote(enteredTitle, enteredContent, date);
+        .addNewNote(enteredTitle, enteredContent, date, []);
 
     Navigator.of(context).pop();
   }
@@ -62,6 +62,7 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
       ),
       body: TextField(
         controller: _contentController,
+        textCapitalization: TextCapitalization.sentences,
         maxLength: 1024,
         maxLines: null,
         autocorrect: false,
@@ -70,9 +71,13 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
         buildCounter: (context,
                 {int? currentLength, bool? isFocused, int? maxLength}) =>
             null,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           border: InputBorder.none,
-          contentPadding: EdgeInsets.all(15),
+          contentPadding: const EdgeInsets.all(15),
+          hintText: 'Ghi chú ở đây...',
+          hintStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                color: Colors.black45,
+              ),
         ),
       ),
     );

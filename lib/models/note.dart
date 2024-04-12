@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
@@ -12,11 +13,13 @@ class Note {
   final DateTime dateCreated;
   DateTime? dateEdited;
   bool isLocked;
+  final List<PlatformFile> files;
 
   Note({
     required this.title,
     required this.content,
     required this.dateCreated,
+    required this.files,
   })  : id = uuid.v4(),
         isLocked = false;
 
@@ -42,5 +45,9 @@ class Note {
 
   void toggleNoteLocker() {
     isLocked = !isLocked;
+  }
+
+  void updateNoteFiles(List<PlatformFile> files) {
+    this.files.addAll(files);
   }
 }

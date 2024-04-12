@@ -1,10 +1,13 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notes/models/note.dart';
+import 'package:notes/providers/edit_state_provider.dart';
 import 'package:notes/providers/notes_provider.dart';
+import 'package:notes/widgets/content_text_field.dart';
 import 'package:notes/widgets/files_grid_view.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -26,7 +29,8 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
   bool _isEditing = false;
-  final _focusNode = FocusNode();
+  bool _isSaved = false;
+  late final List<PlatformFile> _pickedFiles = widget.note.files;
 
   @override
   void initState() {
@@ -48,10 +52,6 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
     });
 
     ScaffoldMessenger.of(context).clearSnackBars();
-
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      FocusScope.of(context).requestFocus(_focusNode);
-    });
   }
 
   void _saveEditedNote() {
@@ -62,9 +62,13 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
         _contentController.text.trim().isEmpty ? '' : _contentController.text;
     DateTime date = DateTime.now();
 
-    ref
-        .watch(notesProvider.notifier)
-        .saveEditedNote(widget.note, editedTitle, editedContent, date);
+    ref.watch(notesProvider.notifier).saveEditedNote(
+          widget.note,
+          editedTitle,
+          editedContent,
+          date,
+          _pickedFiles,
+        );
 
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -76,6 +80,7 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
 
     setState(() {
       _isEditing = false;
+      _isSaved = true;
     });
   }
 
@@ -85,15 +90,13 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
       return;
     }
 
-    _openFiles(result.files);
-  }
+    // ref
+    //     .watch(notesProvider.notifier)
+    //     .updateNoteFiles(widget.note, result.files);
 
-  void _openFiles(List<PlatformFile> files) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => FileGridView(files: files),
-      ),
-    );
+    setState(() {
+      _pickedFiles.addAll(result.files);
+    });
   }
 
   Future<File> _saveFile(PlatformFile file) {
@@ -111,8 +114,10 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
           autocorrect: false,
           controller: _titleController,
           enabled: _isEditing,
+          textCapitalization: TextCapitalization.sentences,
           decoration: const InputDecoration(
             border: InputBorder.none,
+            hintText: 'Tiêu đề',
           ),
         ),
         actions: [
@@ -167,21 +172,35 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
           )
         ],
       ),
-      body: TextField(
-        autocorrect: false,
-        controller: _contentController,
-        enabled: _isEditing,
-        focusNode: _focusNode,
-        autofocus: _isEditing,
-        maxLength: 1024,
-        maxLines: null,
-        cursorColor: Colors.red,
-        buildCounter: (context,
-                {int? currentLength, bool? isFocused, int? maxLength}) =>
-            null,
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.all(15),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            TextField(
+              autocorrect: false,
+              controller: _contentController,
+              enabled: _isEditing,
+              textCapitalization: TextCapitalization.sentences,
+              maxLength: 1024,
+              maxLines: null,
+              cursorColor: Colors.red,
+              buildCounter: (context,
+                      {int? currentLength, bool? isFocused, int? maxLength}) =>
+                  null,
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.all(15),
+                hintText: 'Ghi chú ở đây...',
+              ),
+            ),
+            if (_isSaved)
+              FileGridView(
+                files: widget.note.files,
+              )
+            else
+              FileGridView(
+                files: _pickedFiles,
+              )
+          ],
         ),
       ),
     );
