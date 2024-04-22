@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 
 import 'package:notes/providers/notes_provider.dart';
+import 'package:notes/widgets/files_grid_view.dart';
 
 class NewNoteScreen extends ConsumerStatefulWidget {
   const NewNoteScreen({super.key});
@@ -13,6 +15,7 @@ class NewNoteScreen extends ConsumerStatefulWidget {
 class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
+  final List<PlatformFile> _pickedFiles = [];
 
   @override
   void dispose() {
@@ -31,9 +34,24 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
 
     ref
         .watch(notesProvider.notifier)
-        .addNewNote(enteredTitle, enteredContent, date, []);
+        .addNewNote(enteredTitle, enteredContent, date, _pickedFiles.toList());
+
+    setState(() {
+      _pickedFiles.clear();
+    });
 
     Navigator.of(context).pop();
+  }
+
+  void _pickFiles() async {
+    final result = await FilePicker.platform.pickFiles(allowMultiple: true);
+    if (result == null) {
+      return;
+    }
+
+    setState(() {
+      _pickedFiles.addAll(result.files);
+    });
   }
 
   @override
@@ -48,7 +66,7 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
           ),
           IconButton(
             tooltip: 'Đính kèm tệp',
-            onPressed: () {},
+            onPressed: _pickFiles,
             icon: const Icon(Icons.attach_file_rounded),
           ),
         ],
@@ -60,24 +78,27 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
           ),
         ),
       ),
-      body: TextField(
-        controller: _contentController,
-        textCapitalization: TextCapitalization.sentences,
-        maxLength: 1024,
-        maxLines: null,
-        autocorrect: false,
-        autofocus: true,
-        cursorColor: Colors.red,
-        buildCounter: (context,
-                {int? currentLength, bool? isFocused, int? maxLength}) =>
-            null,
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(15),
-          hintText: 'Ghi chú ở đây...',
-          hintStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                color: Colors.black45,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            TextField(
+              autocorrect: false,
+              controller: _contentController,
+              textCapitalization: TextCapitalization.sentences,
+              maxLength: 1024,
+              maxLines: null,
+              cursorColor: Colors.red,
+              buildCounter: (context,
+                      {int? currentLength, bool? isFocused, int? maxLength}) =>
+                  null,
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.all(15),
+                hintText: 'Ghi chú ở đây...',
               ),
+            ),
+            FileGridView(files: _pickedFiles.toList()),
+          ],
         ),
       ),
     );
