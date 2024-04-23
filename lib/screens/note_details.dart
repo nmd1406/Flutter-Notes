@@ -3,10 +3,13 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:geolocator/geolocator.dart';
+
 import 'package:notes/models/note.dart';
 import 'package:notes/providers/notes_provider.dart';
 import 'package:notes/widgets/files_grid_view.dart';
-import 'package:path_provider/path_provider.dart';
 
 class NoteDetailsScreen extends ConsumerStatefulWidget {
   final Note note;
@@ -25,8 +28,11 @@ class NoteDetailsScreen extends ConsumerStatefulWidget {
 class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
-  bool _isEditing = false;
+  bool _hasAddress = false;
   late final List<PlatformFile> _pickedFiles = [];
+  late double _latitude;
+  late double _longitude;
+  String? _address;
 
   @override
   void initState() {
@@ -40,14 +46,6 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
     _titleController.dispose();
     _contentController.dispose();
     super.dispose();
-  }
-
-  void _editNote() {
-    setState(() {
-      _isEditing = true;
-    });
-
-    ScaffoldMessenger.of(context).clearSnackBars();
   }
 
   void _saveEditedNote() {
@@ -66,6 +64,12 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
           _pickedFiles.toList(),
         );
 
+    if (_address != null) {
+      ref
+          .watch(notesProvider.notifier)
+          .updateUserLocation(widget.note, _address!);
+    }
+
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -75,8 +79,8 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
     );
 
     setState(() {
-      _isEditing = false;
       _pickedFiles.clear();
+      _address = null;
     });
   }
 
@@ -98,6 +102,51 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
     return File(file.path!).copy(newFile.path);
   }
 
+  Future<Position> _getCurrentPosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    return await Geolocator.getCurrentPosition();
+  }
+
+  void _liveLocation() async {
+    LocationSettings locationSettings = const LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10,
+    );
+
+    Geolocator.getPositionStream(locationSettings: locationSettings)
+        .listen((postion) {
+      setState(() {
+        _latitude = postion.latitude;
+        _longitude = postion.longitude;
+      });
+    });
+    final placemarks = await placemarkFromCoordinates(_latitude, _longitude);
+    setState(() {
+      _address =
+          "${placemarks[0].street}, ${placemarks[0].subAdministrativeArea}, ${placemarks[0].administrativeArea}, ${placemarks[0].country}";
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,7 +154,6 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
         title: TextField(
           autocorrect: false,
           controller: _titleController,
-          enabled: _isEditing,
           textCapitalization: TextCapitalization.sentences,
           decoration: const InputDecoration(
             border: InputBorder.none,
@@ -113,24 +161,11 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
           ),
         ),
         actions: [
-          if (!_isEditing)
-            IconButton(
-              tooltip: 'Sửa',
-              onPressed: _editNote,
-              icon: const Icon(Icons.edit_document),
-            )
-          else
-            IconButton(
-              tooltip: 'Lưu thay đổi',
-              onPressed: _saveEditedNote,
-              icon: const Icon(Icons.save),
-            ),
-          if (_isEditing)
-            IconButton(
-              tooltip: 'Đính kèm tệp',
-              onPressed: _pickFiles,
-              icon: const Icon(Icons.attach_file_rounded),
-            ),
+          IconButton(
+            tooltip: 'Lưu thay đổi',
+            onPressed: _saveEditedNote,
+            icon: const Icon(Icons.save_outlined),
+          ),
           IconButton(
             tooltip: 'Tìm kiếm',
             onPressed: () {},
@@ -139,6 +174,13 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
           PopupMenuButton(
             tooltip: 'Tuỳ chọn khác',
             itemBuilder: (context) => [
+              PopupMenuItem(
+                onTap: _pickFiles,
+                child: const ListTile(
+                  leading: Icon(Icons.attach_file_rounded),
+                  title: Text('Đính kèm tệp'),
+                ),
+              ),
               PopupMenuItem(
                 child: const ListTile(
                   leading: Icon(Icons.star_border),
@@ -160,6 +202,22 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
                 ),
                 onTap: () {},
               ),
+              PopupMenuItem(
+                child: const ListTile(
+                  leading: Icon(Icons.location_on_outlined),
+                  title: Text('Vị trí của tôi'),
+                ),
+                onTap: () {
+                  _getCurrentPosition().then((location) {
+                    setState(() {
+                      _latitude = location.latitude;
+                      _longitude = location.longitude;
+                      _hasAddress = true;
+                    });
+                    _liveLocation();
+                  });
+                },
+              ),
             ],
           )
         ],
@@ -170,7 +228,6 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
             TextField(
               autocorrect: false,
               controller: _contentController,
-              enabled: _isEditing,
               textCapitalization: TextCapitalization.sentences,
               maxLength: 1024,
               maxLines: null,
@@ -188,6 +245,12 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
               FileGridView(files: [...widget.note.files, ..._pickedFiles])
             else
               FileGridView(files: widget.note.files),
+            const SizedBox(height: 30),
+            if (_hasAddress || widget.note.address != null)
+              Text(
+                ('Vị trí hiện tại: ${_address ?? widget.note.address}'),
+                style: Theme.of(context).textTheme.labelSmall,
+              )
           ],
         ),
       ),

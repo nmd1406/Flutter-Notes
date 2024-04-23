@@ -14,6 +14,7 @@ class Note {
   DateTime? dateEdited;
   bool isLocked;
   final List<PlatformFile> files;
+  String? address;
 
   Note({
     required this.title,
@@ -49,5 +50,9 @@ class Note {
 
   void updateNoteFiles(List<PlatformFile> files) {
     this.files.addAll(files);
+  }
+
+  void updateAddress(String address) {
+    this.address = address;
   }
 }
