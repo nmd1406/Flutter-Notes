@@ -31,7 +31,7 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
 
   void _saveNewNote() {
     String enteredTitle = _titleController.text.trim().isEmpty
-        ? 'Không có tiêu đề'
+        ? 'Tiêu đề'
         : _titleController.text.trim();
     String enteredContent =
         _contentController.text.trim().isEmpty ? '' : _contentController.text;

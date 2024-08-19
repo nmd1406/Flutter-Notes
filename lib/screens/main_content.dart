@@ -19,6 +19,15 @@ class MainContentScreen extends ConsumerWidget {
     ref.watch(selectedNoteProvider.notifier).updateSelectedNotes(selectedNotes);
   }
 
+  void _notePin(WidgetRef ref) {
+    final selectedNotes = ref.read(selectedNoteProvider);
+    for (var note in selectedNotes) {
+      ref.watch(notesProvider.notifier).toggleNotePin(note);
+    }
+
+    ref.watch(selectedNoteProvider.notifier).updateSelectedNotes(selectedNotes);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isMultipleSelectionVisible =
@@ -38,9 +47,23 @@ class MainContentScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: isMultipleSelectionVisible
-            ? Text(selectedNotesCount == 0
-                ? 'Chọn ghi chú'
-                : 'Đã chọn $selectedNotesCount')
+            ? Row(
+                children: [
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () {},
+                    icon: Icon(Icons.circle_outlined),
+                  ),
+                  Text(
+                    selectedNotesCount == 0
+                        ? 'Chọn ghi chú'
+                        : 'Đã chọn $selectedNotesCount',
+                    style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
+              )
             : Text(
                 'Tất cả ghi chú',
                 style: Theme.of(context).textTheme.titleLarge!.copyWith(
@@ -71,11 +94,16 @@ class MainContentScreen extends ConsumerWidget {
                 ),
               ],
             ),
+          ] else ...[
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.close),
+            ),
           ]
         ],
       ),
       body: mainContent,
-      drawer: const MainDrawer(),
+      drawer: isMultipleSelectionVisible ? null : const MainDrawer(),
       floatingActionButton: Visibility(
         visible: !isMultipleSelectionVisible,
         child: FloatingActionButton(
@@ -110,9 +138,11 @@ class MainContentScreen extends ConsumerWidget {
                   label: const Text('Xoá'),
                 ),
                 TextButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.star_border),
-                  label: const Text('Thêm vào mục yêu thích'),
+                  onPressed: () {
+                    _notePin(ref);
+                  },
+                  icon: const Icon(Icons.push_pin),
+                  label: const Text('Ghim'),
                 )
               ],
             )

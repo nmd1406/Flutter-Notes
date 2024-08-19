@@ -62,6 +62,11 @@ class NoteGridViewItem extends StatelessWidget {
                       ),
                     ),
                   ),
+                if (note.isPinned)
+                  Container(
+                    alignment: Alignment.topRight,
+                    child: const Icon(Icons.push_pin),
+                  )
               ],
             ),
           ),

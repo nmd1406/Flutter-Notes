@@ -6,7 +6,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:notes/models/note.dart';
 import 'package:notes/providers/multiple_selection_function.dart';
 import 'package:notes/widgets/note_grid_view_item.dart';
-import 'package:notes/widgets/note_item.dart';
+import 'package:notes/widgets/note_list_item.dart';
 
 class NoteList extends ConsumerStatefulWidget {
   final List<Note> noteList;
@@ -77,6 +77,10 @@ class _NoteListState extends ConsumerState<NoteList> {
         );
       }
     }
+
+    final pinnedNotes = widget.noteList.where((note) => note.isPinned).toList();
+    widget.noteList.removeWhere((note) => pinnedNotes.contains(note));
+    widget.noteList.insertAll(0, pinnedNotes);
   }
 
   void doMultipleSelection(Note note) {
@@ -222,7 +226,7 @@ class _NoteListState extends ConsumerState<NoteList> {
                   children: [
                     AbsorbPointer(
                       absorbing: _isMultiPleSelectorVisible,
-                      child: NoteItem(
+                      child: NoteListItem(
                         key: ValueKey(widget.noteList[index].id),
                         note: widget.noteList[index],
                       ),
@@ -230,7 +234,7 @@ class _NoteListState extends ConsumerState<NoteList> {
                     Visibility(
                       visible: _isMultiPleSelectorVisible,
                       child: Align(
-                        alignment: Alignment.topRight,
+                        alignment: Alignment.topLeft,
                         child: IconButton(
                           onPressed: () {
                             setState(() {

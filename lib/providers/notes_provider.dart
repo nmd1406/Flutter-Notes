@@ -40,6 +40,20 @@ class NotesNotifier extends StateNotifier<List<Note>> {
     state = [...notes];
   }
 
+  void toggleNotePin(Note note) {
+    int index = state.indexOf(note);
+    state[index].toggleNotePin();
+    if (state[index].isPinned) {
+      Note noteCopy = state[index];
+      state.removeAt(index);
+      state = [noteCopy, ...state];
+    } else {
+      Note noteCopy = state[index];
+      state.removeAt(index);
+      state = [...state, noteCopy];
+    }
+  }
+
   void updateUserLocation(Note note, String address) {
     int index = state.indexOf(note);
     state[index].updateAddress(address);

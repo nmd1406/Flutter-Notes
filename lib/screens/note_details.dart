@@ -50,7 +50,7 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
 
   void _saveEditedNote() {
     String editedTitle = _titleController.text.trim().isEmpty
-        ? 'Không có tiêu đề'
+        ? 'Tiêu đề'
         : _titleController.text.trim();
     String editedContent =
         _contentController.text.trim().isEmpty ? '' : _contentController.text;

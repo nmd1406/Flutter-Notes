@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:notes/models/note.dart';
 import 'package:notes/screens/note_details.dart';
 
-class NoteItem extends StatelessWidget {
+class NoteListItem extends StatelessWidget {
   final Note note;
 
-  const NoteItem({
+  const NoteListItem({
     super.key,
     required this.note,
   });
@@ -75,6 +75,11 @@ class NoteItem extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (note.isPinned)
+                Container(
+                  alignment: Alignment.topRight,
+                  child: const Icon(Icons.push_pin),
+                )
             ],
           ),
         ),

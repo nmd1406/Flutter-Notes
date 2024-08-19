@@ -13,6 +13,7 @@ class Note {
   final DateTime dateCreated;
   DateTime? dateEdited;
   bool isLocked;
+  bool isPinned;
   final List<PlatformFile> files;
   String? address;
 
@@ -22,7 +23,8 @@ class Note {
     required this.dateCreated,
     required this.files,
   })  : id = uuid.v4(),
-        isLocked = false;
+        isLocked = false,
+        isPinned = false;
 
   String getSimpleDate(DateTime date) {
     return simpleFormatter.format(date);
@@ -46,6 +48,10 @@ class Note {
 
   void toggleNoteLocker() {
     isLocked = !isLocked;
+  }
+
+  void toggleNotePin() {
+    isPinned = !isPinned;
   }
 
   void updateNoteFiles(List<PlatformFile> files) {
