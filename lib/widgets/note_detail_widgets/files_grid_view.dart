@@ -2,7 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:notes/providers/notes_provider.dart';
-import 'package:notes/widgets/file_grid_view_item.dart';
+import 'package:notes/widgets/note_detail_widgets/file_grid_view_item.dart';
 
 class FileGridView extends ConsumerWidget {
   final List<PlatformFile> files;

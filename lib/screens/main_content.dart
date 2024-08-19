@@ -5,7 +5,7 @@ import 'package:notes/providers/multiple_selection_function.dart';
 import 'package:notes/providers/notes_provider.dart';
 import 'package:notes/screens/new_note.dart';
 import 'package:notes/widgets/main_drawer.dart';
-import 'package:notes/widgets/note_list.dart';
+import 'package:notes/widgets/notes_views/note_list.dart';
 
 class MainContentScreen extends ConsumerWidget {
   const MainContentScreen({super.key});

@@ -5,8 +5,8 @@ import 'package:local_auth/local_auth.dart';
 
 import 'package:notes/models/note.dart';
 import 'package:notes/providers/multiple_selection_function.dart';
-import 'package:notes/widgets/note_grid_view_item.dart';
-import 'package:notes/widgets/note_list_item.dart';
+import 'package:notes/widgets/notes_views/note_grid_view_item.dart';
+import 'package:notes/widgets/notes_views/note_list_item.dart';
 
 class NoteList extends ConsumerStatefulWidget {
   final List<Note> noteList;
