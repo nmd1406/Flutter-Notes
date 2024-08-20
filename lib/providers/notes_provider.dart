@@ -59,6 +59,14 @@ class NotesNotifier extends StateNotifier<List<Note>> {
     state[index].updateAddress(address);
     state = [...state];
   }
+
+  List<Note> getLockedNotes() {
+    return state.where((note) => note.isLocked).toList();
+  }
+
+  List<Note> getDeletedNotes() {
+    return state.where((note) => note.isDeleted).toList();
+  }
 }
 
 final notesProvider = StateNotifierProvider<NotesNotifier, List<Note>>(

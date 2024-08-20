@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:notes/providers/multiple_selection_function.dart';
+import 'package:notes/models/note.dart';
 
+import 'package:notes/providers/multiple_selection_function.dart';
 import 'package:notes/providers/notes_provider.dart';
 import 'package:notes/screens/new_note.dart';
 import 'package:notes/widgets/main_drawer.dart';
 import 'package:notes/widgets/notes_views/note_list.dart';
 
-class MainContentScreen extends ConsumerWidget {
+class MainContentScreen extends ConsumerStatefulWidget {
   const MainContentScreen({super.key});
 
-  void _noteLocker(WidgetRef ref) {
+  @override
+  ConsumerState<MainContentScreen> createState() => _MainContentScreenState();
+}
+
+class _MainContentScreenState extends ConsumerState<MainContentScreen> {
+  List<Note> displayingNotes = [];
+
+  void noteLocker(WidgetRef ref) {
     final selectedNotes = ref.read(selectedNoteProvider);
     for (var note in selectedNotes) {
       ref.watch(notesProvider.notifier).toggleNoteLocker(note);
@@ -19,7 +27,7 @@ class MainContentScreen extends ConsumerWidget {
     ref.watch(selectedNoteProvider.notifier).updateSelectedNotes(selectedNotes);
   }
 
-  void _notePin(WidgetRef ref) {
+  void notePin(WidgetRef ref) {
     final selectedNotes = ref.read(selectedNoteProvider);
     for (var note in selectedNotes) {
       ref.watch(notesProvider.notifier).toggleNotePin(note);
@@ -28,19 +36,26 @@ class MainContentScreen extends ConsumerWidget {
     ref.watch(selectedNoteProvider.notifier).updateSelectedNotes(selectedNotes);
   }
 
+  void drawerNoteFilter(List<Note> filteredNotes) {
+    setState(() {
+      displayingNotes = List.from(filteredNotes);
+    });
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isMultipleSelectionVisible =
         ref.watch(multipleSelectionFunctionProvider);
     final noteList = ref.watch(notesProvider);
     int selectedNotesCount = ref.watch(selectedNotesCountProvider);
+
     Widget mainContent = const Center(
-      child: Text('Không có ghi chú'),
+      child: Text('Không có ghi chú nào ở đây'),
     );
 
     if (noteList.isNotEmpty) {
       mainContent = NoteList(
-        noteList: noteList,
+        noteList: displayingNotes.isEmpty ? noteList : displayingNotes,
       );
     }
 
@@ -52,7 +67,7 @@ class MainContentScreen extends ConsumerWidget {
                   IconButton(
                     padding: EdgeInsets.zero,
                     onPressed: () {},
-                    icon: Icon(Icons.circle_outlined),
+                    icon: const Icon(Icons.circle_outlined),
                   ),
                   Text(
                     selectedNotesCount == 0
@@ -96,14 +111,23 @@ class MainContentScreen extends ConsumerWidget {
             ),
           ] else ...[
             IconButton(
-              onPressed: () {},
+              onPressed: () {
+                setState(() {});
+              },
               icon: const Icon(Icons.close),
             ),
           ]
         ],
       ),
       body: mainContent,
-      drawer: isMultipleSelectionVisible ? null : const MainDrawer(),
+      drawer: isMultipleSelectionVisible
+          ? null
+          : MainDrawer(
+              noteCount: noteList.length,
+              lockedNoteCount: noteList.where((note) => note.isLocked).length,
+              deletedNoteCount: 0,
+              onChangeNoteList: drawerNoteFilter,
+            ),
       floatingActionButton: Visibility(
         visible: !isMultipleSelectionVisible,
         child: FloatingActionButton(
@@ -127,7 +151,7 @@ class MainContentScreen extends ConsumerWidget {
               destinations: [
                 TextButton.icon(
                   onPressed: () {
-                    _noteLocker(ref);
+                    noteLocker(ref);
                   },
                   icon: const Icon(Icons.lock),
                   label: const Text('Khoá'),
@@ -139,7 +163,7 @@ class MainContentScreen extends ConsumerWidget {
                 ),
                 TextButton.icon(
                   onPressed: () {
-                    _notePin(ref);
+                    notePin(ref);
                   },
                   icon: const Icon(Icons.push_pin),
                   label: const Text('Ghim'),

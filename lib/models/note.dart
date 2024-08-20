@@ -14,6 +14,8 @@ class Note {
   DateTime? dateEdited;
   bool isLocked;
   bool isPinned;
+  bool isSelected;
+  bool isDeleted;
   final List<PlatformFile> files;
   String? address;
 
@@ -24,7 +26,9 @@ class Note {
     required this.files,
   })  : id = uuid.v4(),
         isLocked = false,
-        isPinned = false;
+        isPinned = false,
+        isSelected = false,
+        isDeleted = false;
 
   String getSimpleDate(DateTime date) {
     return simpleFormatter.format(date);
