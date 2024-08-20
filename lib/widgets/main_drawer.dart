@@ -49,6 +49,10 @@ class MainDrawer extends ConsumerWidget {
                 ),
                 onTap: () {
                   onChangeNoteList(allNotes);
+
+                  if (Scaffold.of(context).isDrawerOpen) {
+                    Scaffold.of(context).closeDrawer();
+                  }
                 },
               ),
               const SizedBox(
@@ -65,6 +69,10 @@ class MainDrawer extends ConsumerWidget {
                   final deletedNotes =
                       allNotes.where((note) => note.isLocked).toList();
                   onChangeNoteList(deletedNotes);
+
+                  if (Scaffold.of(context).isDrawerOpen) {
+                    Scaffold.of(context).closeDrawer();
+                  }
                 },
               ),
               const SizedBox(
@@ -81,6 +89,10 @@ class MainDrawer extends ConsumerWidget {
                   final deletedNotes =
                       allNotes.where((note) => note.isDeleted).toList();
                   onChangeNoteList(deletedNotes);
+
+                  if (Scaffold.of(context).isDrawerOpen) {
+                    Scaffold.of(context).closeDrawer();
+                  }
                 },
               ),
             ],
