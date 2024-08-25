@@ -9,6 +9,7 @@ class MainDrawer extends ConsumerWidget {
   final int lockedNoteCount;
   final int deletedNoteCount;
   final void Function(List<Note> filteredNotes) onChangeNoteList;
+  final void Function(String changedTitle) onChangeTitle;
 
   const MainDrawer({
     super.key,
@@ -16,6 +17,7 @@ class MainDrawer extends ConsumerWidget {
     required this.lockedNoteCount,
     required this.deletedNoteCount,
     required this.onChangeNoteList,
+    required this.onChangeTitle,
   });
 
   @override
@@ -42,14 +44,20 @@ class MainDrawer extends ConsumerWidget {
               ),
               ListTile(
                 leading: const Icon(Icons.text_snippet),
-                title: const Text('Tất cả ghi chú'),
-                trailing: Text('$noteCount'),
+                title: const Text(
+                  'Tất cả ghi chú',
+                  style: TextStyle(fontSize: 20),
+                ),
+                trailing: Text(
+                  '$noteCount',
+                  style: const TextStyle(fontSize: 14),
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
                 onTap: () {
                   onChangeNoteList(allNotes);
-
+                  onChangeTitle('Tất cả ghi chú');
                   if (Scaffold.of(context).isDrawerOpen) {
                     Scaffold.of(context).closeDrawer();
                   }
@@ -60,8 +68,14 @@ class MainDrawer extends ConsumerWidget {
               ),
               ListTile(
                 leading: const Icon(Icons.lock),
-                title: const Text('Ghi chú bị khoá'),
-                trailing: Text('$lockedNoteCount'),
+                title: const Text(
+                  'Ghi chú bị khoá',
+                  style: TextStyle(fontSize: 20),
+                ),
+                trailing: Text(
+                  '$lockedNoteCount',
+                  style: const TextStyle(fontSize: 14),
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
@@ -69,7 +83,7 @@ class MainDrawer extends ConsumerWidget {
                   final deletedNotes =
                       allNotes.where((note) => note.isLocked).toList();
                   onChangeNoteList(deletedNotes);
-
+                  onChangeTitle('Ghi chú bị khoá');
                   if (Scaffold.of(context).isDrawerOpen) {
                     Scaffold.of(context).closeDrawer();
                   }
@@ -80,8 +94,14 @@ class MainDrawer extends ConsumerWidget {
               ),
               ListTile(
                 leading: const Icon(Icons.delete),
-                title: const Text('Thùng rác'),
-                trailing: Text('$deletedNoteCount'),
+                title: const Text(
+                  'Thùng rác',
+                  style: TextStyle(fontSize: 20),
+                ),
+                trailing: Text(
+                  '$deletedNoteCount',
+                  style: const TextStyle(fontSize: 14),
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
@@ -89,7 +109,7 @@ class MainDrawer extends ConsumerWidget {
                   final deletedNotes =
                       allNotes.where((note) => note.isDeleted).toList();
                   onChangeNoteList(deletedNotes);
-
+                  onChangeTitle('Thùng rác');
                   if (Scaffold.of(context).isDrawerOpen) {
                     Scaffold.of(context).closeDrawer();
                   }
