@@ -5,7 +5,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'package:notes/providers/notes_provider.dart';
-import 'package:notes/widgets/note_detail_widgets/files_grid_view.dart';
+import 'package:notes/widgets/file_view/files_grid_view.dart';
 
 class NewNoteScreen extends ConsumerStatefulWidget {
   const NewNoteScreen({super.key});

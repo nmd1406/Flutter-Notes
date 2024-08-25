@@ -9,7 +9,7 @@ import 'package:geolocator/geolocator.dart';
 
 import 'package:notes/models/note.dart';
 import 'package:notes/providers/notes_provider.dart';
-import 'package:notes/widgets/note_detail_widgets/files_grid_view.dart';
+import 'package:notes/widgets/file_view/files_grid_view.dart';
 
 class NoteDetailsScreen extends ConsumerStatefulWidget {
   final Note note;
