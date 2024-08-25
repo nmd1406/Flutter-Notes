@@ -4,7 +4,7 @@ import 'package:notes/models/note.dart';
 class MultipleSelectionFunctionNotifier extends StateNotifier<bool> {
   MultipleSelectionFunctionNotifier() : super(false);
 
-  void showScreen(bool isVisible) {
+  void toggle(bool isVisible) {
     state = isVisible;
   }
 }
@@ -18,22 +18,27 @@ class SelectedNoteNotifier extends StateNotifier<List<Note>> {
   SelectedNoteNotifier() : super([]);
 
   void updateSelectedNotes(List<Note> notes) {
-    state = notes;
+    state = [...notes];
+  }
+
+  void deleteAllSelectedNote() {
+    state = [];
+  }
+
+  void addSelectedNote(Note note) {
+    state = [...state, note];
+  }
+
+  void removeSelectedNote(Note note) {
+    state.remove(note);
+    state = [...state];
+  }
+
+  int count() {
+    return state.length;
   }
 }
 
 final selectedNoteProvider =
     StateNotifierProvider<SelectedNoteNotifier, List<Note>>(
         (ref) => SelectedNoteNotifier());
-
-class SelectedNotesCountNotifier extends StateNotifier<int> {
-  SelectedNotesCountNotifier() : super(0);
-
-  void update(int count) {
-    state = count;
-  }
-}
-
-final selectedNotesCountProvider =
-    StateNotifierProvider<SelectedNotesCountNotifier, int>(
-        (ref) => SelectedNotesCountNotifier());

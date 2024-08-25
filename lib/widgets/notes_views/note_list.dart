@@ -5,6 +5,7 @@ import 'package:local_auth/local_auth.dart';
 
 import 'package:notes/models/note.dart';
 import 'package:notes/providers/multiple_selection_function.dart';
+import 'package:notes/providers/notes_provider.dart';
 import 'package:notes/widgets/notes_views/note_grid_view_item.dart';
 import 'package:notes/widgets/notes_views/note_list_item.dart';
 
@@ -22,9 +23,7 @@ class NoteList extends ConsumerStatefulWidget {
 
 class _NoteListState extends ConsumerState<NoteList> {
   bool _isAscendingOrder = true;
-  bool _isMultiPleSelectorVisible = false;
   String _selectingViewStyle = 'list';
-  final List<Note> _selectedNote = [];
   String _selectingValue = 'Tiêu đề';
 
   late final LocalAuthentication auth;
@@ -83,17 +82,17 @@ class _NoteListState extends ConsumerState<NoteList> {
     widget.noteList.insertAll(0, pinnedNotes);
   }
 
-  void doMultipleSelection(Note note) {
-    if (_isMultiPleSelectorVisible) {
-      if (_selectedNote.contains(note)) {
-        _selectedNote.remove(note);
-      } else {
-        _selectedNote.add(note);
-      }
+  void doMultipleSelection(List<Note> selectedNote, Note note) {
+    if (selectedNote.contains(note)) {
+      selectedNote.remove(note);
+      note.isSelected = false;
+    } else {
+      selectedNote.add(note);
+      note.isSelected = true;
     }
 
-    ref.watch(selectedNoteProvider.notifier).updateSelectedNotes(_selectedNote);
-    ref.watch(selectedNotesCountProvider.notifier).update(_selectedNote.length);
+    ref.watch(selectedNoteProvider.notifier).updateSelectedNotes(selectedNote);
+    ref.read(notesProvider.notifier).toggleSelectedNote(note);
   }
 
   Future<void> _authenticate(Note note) async {
@@ -116,6 +115,10 @@ class _NoteListState extends ConsumerState<NoteList> {
 
   @override
   Widget build(BuildContext context) {
+    late final List<Note> selectedNote = ref.watch(selectedNoteProvider);
+    bool isMultiPleSelectorVisible =
+        ref.watch(multipleSelectionFunctionProvider);
+    ref.watch(notesProvider);
     return Column(
       children: [
         IntrinsicHeight(
@@ -209,11 +212,14 @@ class _NoteListState extends ConsumerState<NoteList> {
               itemBuilder: (context, index) => InkWell(
                 onLongPress: () {
                   setState(() {
-                    _isMultiPleSelectorVisible = !_isMultiPleSelectorVisible;
-                    _selectedNote.clear();
+                    isMultiPleSelectorVisible = !isMultiPleSelectorVisible;
+                    selectedNote.clear();
+                    ref
+                        .read(notesProvider.notifier)
+                        .unSelectNotes(widget.noteList);
                     ref
                         .read(multipleSelectionFunctionProvider.notifier)
-                        .showScreen(_isMultiPleSelectorVisible);
+                        .toggle(isMultiPleSelectorVisible);
                   });
                 },
                 onTap: () {
@@ -225,23 +231,27 @@ class _NoteListState extends ConsumerState<NoteList> {
                 child: Stack(
                   children: [
                     AbsorbPointer(
-                      absorbing: _isMultiPleSelectorVisible,
+                      absorbing: isMultiPleSelectorVisible,
                       child: NoteListItem(
                         key: ValueKey(widget.noteList[index].id),
                         note: widget.noteList[index],
                       ),
                     ),
                     Visibility(
-                      visible: _isMultiPleSelectorVisible,
+                      visible: isMultiPleSelectorVisible,
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: IconButton(
                           onPressed: () {
                             setState(() {
-                              doMultipleSelection(widget.noteList[index]);
+                              doMultipleSelection(
+                                  selectedNote, widget.noteList[index]);
+                              ref
+                                  .read(notesProvider.notifier)
+                                  .toggleSelectedNote(widget.noteList[index]);
                             });
                           },
-                          icon: !_selectedNote.contains(widget.noteList[index])
+                          icon: !widget.noteList[index].isSelected
                               ? const Icon(Icons.circle_outlined)
                               : const Icon(
                                   Icons.check_circle,
@@ -269,11 +279,14 @@ class _NoteListState extends ConsumerState<NoteList> {
               itemBuilder: (context, index) => InkWell(
                 onLongPress: () {
                   setState(() {
-                    _isMultiPleSelectorVisible = !_isMultiPleSelectorVisible;
-                    _selectedNote.clear();
+                    isMultiPleSelectorVisible = !isMultiPleSelectorVisible;
+                    selectedNote.clear();
+                    ref
+                        .read(notesProvider.notifier)
+                        .unSelectNotes(widget.noteList);
                     ref
                         .read(multipleSelectionFunctionProvider.notifier)
-                        .showScreen(_isMultiPleSelectorVisible);
+                        .toggle(isMultiPleSelectorVisible);
                   });
                 },
                 onTap: () {
@@ -285,23 +298,24 @@ class _NoteListState extends ConsumerState<NoteList> {
                 child: Stack(
                   children: [
                     AbsorbPointer(
-                      absorbing: _isMultiPleSelectorVisible,
+                      absorbing: isMultiPleSelectorVisible,
                       child: NoteGridViewItem(
                         key: ValueKey(widget.noteList[index].id),
                         note: widget.noteList[index],
                       ),
                     ),
                     Visibility(
-                      visible: _isMultiPleSelectorVisible,
+                      visible: isMultiPleSelectorVisible,
                       child: Align(
                         alignment: Alignment.topRight,
                         child: IconButton(
                           onPressed: () {
                             setState(() {
-                              doMultipleSelection(widget.noteList[index]);
+                              doMultipleSelection(
+                                  selectedNote, widget.noteList[index]);
                             });
                           },
-                          icon: !_selectedNote.contains(widget.noteList[index])
+                          icon: !widget.noteList[index].isSelected
                               ? const Icon(Icons.circle_outlined)
                               : const Icon(
                                   Icons.check_circle,

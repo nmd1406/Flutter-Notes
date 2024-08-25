@@ -5,6 +5,7 @@ import 'package:notes/models/note.dart';
 import 'package:notes/providers/multiple_selection_function.dart';
 import 'package:notes/providers/notes_provider.dart';
 import 'package:notes/screens/new_note.dart';
+import 'package:notes/screens/search_screen.dart';
 import 'package:notes/widgets/main_drawer.dart';
 import 'package:notes/widgets/notes_views/note_list.dart';
 
@@ -17,6 +18,8 @@ class MainContentScreen extends ConsumerStatefulWidget {
 
 class _MainContentScreenState extends ConsumerState<MainContentScreen> {
   List<Note> displayingNotes = [];
+  bool isSelectAll = false;
+  String screenTitle = 'Tất cả ghi chú';
 
   void noteLocker(WidgetRef ref) {
     final selectedNotes = ref.read(selectedNoteProvider);
@@ -24,7 +27,9 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
       ref.watch(notesProvider.notifier).toggleNoteLocker(note);
     }
 
-    ref.watch(selectedNoteProvider.notifier).updateSelectedNotes(selectedNotes);
+    ref
+        .watch(selectedNoteProvider.notifier)
+        .updateSelectedNotes(selectedNotes.toList());
   }
 
   void notePin(WidgetRef ref) {
@@ -33,7 +38,9 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
       ref.watch(notesProvider.notifier).toggleNotePin(note);
     }
 
-    ref.watch(selectedNoteProvider.notifier).updateSelectedNotes(selectedNotes);
+    ref
+        .watch(selectedNoteProvider.notifier)
+        .updateSelectedNotes(selectedNotes.toList());
   }
 
   void drawerNoteFilter(List<Note> filteredNotes) {
@@ -42,21 +49,50 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
     });
   }
 
+  void toggleSelectAllNotes() {
+    final noteList =
+        displayingNotes.isEmpty ? ref.read(notesProvider) : displayingNotes;
+    final selectedNotes = ref.read(selectedNoteProvider);
+
+    if (noteList.length == selectedNotes.length) {
+      ref.watch(selectedNoteProvider.notifier).deleteAllSelectedNote();
+      ref.watch(notesProvider.notifier).unSelectNotes(noteList);
+      setState(() {
+        isSelectAll = false;
+      });
+    } else {
+      ref.watch(selectedNoteProvider.notifier).updateSelectedNotes(noteList);
+      ref.watch(notesProvider.notifier).selectNotes(noteList);
+      setState(() {
+        isSelectAll = true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    int selectedNotesCount = ref.watch(selectedNoteProvider).length;
+
     final isMultipleSelectionVisible =
         ref.watch(multipleSelectionFunctionProvider);
     final noteList = ref.watch(notesProvider);
-    int selectedNotesCount = ref.watch(selectedNotesCountProvider);
 
     Widget mainContent = const Center(
       child: Text('Không có ghi chú nào ở đây'),
     );
 
     if (noteList.isNotEmpty) {
-      mainContent = NoteList(
-        noteList: displayingNotes.isEmpty ? noteList : displayingNotes,
-      );
+      if (screenTitle == 'Tất cả ghi chú') {
+        mainContent = NoteList(noteList: noteList);
+      } else {
+        if (displayingNotes.isEmpty) {
+          mainContent = const Center(
+            child: Text('Trống'),
+          );
+        } else {
+          mainContent = NoteList(noteList: displayingNotes);
+        }
+      }
     }
 
     return Scaffold(
@@ -66,8 +102,15 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
                 children: [
                   IconButton(
                     padding: EdgeInsets.zero,
-                    onPressed: () {},
-                    icon: const Icon(Icons.circle_outlined),
+                    onPressed: () {
+                      toggleSelectAllNotes();
+                    },
+                    icon: !isSelectAll
+                        ? const Icon(Icons.circle_outlined)
+                        : const Icon(
+                            Icons.check_circle,
+                            color: Colors.red,
+                          ),
                   ),
                   Text(
                     selectedNotesCount == 0
@@ -80,7 +123,7 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
                 ],
               )
             : Text(
-                'Tất cả ghi chú',
+                screenTitle,
                 style: Theme.of(context).textTheme.titleLarge!.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -89,30 +132,28 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
           if (!isMultipleSelectionVisible) ...[
             IconButton(
               tooltip: 'Tìm kiếm',
-              onPressed: () {},
+              onPressed: () {
+                // Navigator.of(context).push(
+                //   MaterialPageRoute(
+                //     builder: (context) => const SearchScreen(),
+                //   ),
+                // );
+                showSearch(
+                  context: context,
+                  delegate: SearchScreen(noteList),
+                );
+              },
               icon: const Icon(Icons.search),
-            ),
-            PopupMenuButton(
-              tooltip: 'Tuỳ chọn khác',
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  child: const Text('Sửa'),
-                  onTap: () {},
-                ),
-                PopupMenuItem(
-                  child: const Text('Xem'),
-                  onTap: () {},
-                ),
-                PopupMenuItem(
-                  child: const Text('Ghim mục yêu thích lên đầu'),
-                  onTap: () {},
-                ),
-              ],
             ),
           ] else ...[
             IconButton(
               onPressed: () {
-                setState(() {});
+                ref
+                    .watch(multipleSelectionFunctionProvider.notifier)
+                    .toggle(false);
+                setState(() {
+                  isSelectAll = false;
+                });
               },
               icon: const Icon(Icons.close),
             ),
@@ -127,9 +168,12 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
               lockedNoteCount: noteList.where((note) => note.isLocked).length,
               deletedNoteCount: 0,
               onChangeNoteList: drawerNoteFilter,
+              onChangeTitle: (String changedTitle) {
+                screenTitle = changedTitle;
+              },
             ),
       floatingActionButton: Visibility(
-        visible: !isMultipleSelectionVisible,
+        visible: !isMultipleSelectionVisible && screenTitle == 'Tất cả ghi chú',
         child: FloatingActionButton(
           onPressed: () {
             Navigator.of(context).push(

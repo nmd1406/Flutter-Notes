@@ -40,6 +40,29 @@ class NotesNotifier extends StateNotifier<List<Note>> {
     state = [...notes];
   }
 
+  void toggleSelectedNote(Note note) {
+    List<Note> notes = state;
+    int index = notes.indexOf(note);
+    notes[index].isSelected = !notes[index].isSelected;
+    state = [...notes];
+  }
+
+  void selectNotes(List<Note> notes) {
+    for (var note in notes) {
+      note.isSelected = true;
+    }
+
+    state = [...notes];
+  }
+
+  void unSelectNotes(List<Note> notes) {
+    for (var note in notes) {
+      note.isSelected = false;
+    }
+
+    state = [...notes];
+  }
+
   void toggleNotePin(Note note) {
     int index = state.indexOf(note);
     state[index].toggleNotePin();

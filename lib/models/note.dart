@@ -58,6 +58,10 @@ class Note {
     isPinned = !isPinned;
   }
 
+  void toggleSelectedNote() {
+    isSelected = !isSelected;
+  }
+
   void updateNoteFiles(List<PlatformFile> files) {
     this.files.addAll(files);
   }
