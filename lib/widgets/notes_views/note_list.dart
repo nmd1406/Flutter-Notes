@@ -118,7 +118,8 @@ class _NoteListState extends ConsumerState<NoteList> {
     late final List<Note> selectedNote = ref.watch(selectedNoteProvider);
     bool isMultiPleSelectorVisible =
         ref.watch(multipleSelectionFunctionProvider);
-    ref.watch(notesProvider);
+
+    // ref.watch(notesProvider);
     return Column(
       children: [
         IntrinsicHeight(

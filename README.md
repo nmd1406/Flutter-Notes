@@ -1,4 +1,4 @@
-# Flutter Notes Android App (incomplete)
+# Flutter Notes Android App (Almost done)
 
 Main tasks:
 
