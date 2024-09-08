@@ -49,18 +49,20 @@ class NotesNotifier extends StateNotifier<List<Note>> {
 
   void selectNotes(List<Note> notes) {
     for (var note in notes) {
-      note.isSelected = true;
+      int index = state.indexOf(note);
+      state[index].isSelected = true;
     }
 
-    state = [...notes];
+    state = [...state];
   }
 
   void unSelectNotes(List<Note> notes) {
     for (var note in notes) {
-      note.isSelected = false;
+      int index = state.indexOf(note);
+      state[index].isSelected = false;
     }
 
-    state = [...notes];
+    state = [...state];
   }
 
   void toggleNotePin(Note note) {
@@ -90,8 +92,53 @@ class NotesNotifier extends StateNotifier<List<Note>> {
   List<Note> getDeletedNotes() {
     return state.where((note) => note.isDeleted).toList();
   }
+
+  void moveNoteToBin(Note note) {
+    int index = state.indexOf(note);
+    state[index].isDeleted = true;
+    state[index].isPinned = false;
+    state[index].isLocked = false;
+    state = [...state];
+  }
+
+  void restoreNote(Note note) {
+    int index = state.indexOf(note);
+    state[index].isDeleted = false;
+    state = [...state];
+  }
 }
 
 final notesProvider = StateNotifierProvider<NotesNotifier, List<Note>>(
   (ref) => NotesNotifier(),
+);
+
+class LockedNoteNotifier extends StateNotifier<List<Note>> {
+  LockedNoteNotifier() : super([]);
+
+  void update(List<Note> noteList) {
+    state = [...noteList];
+  }
+}
+
+final lockedNoteProvider =
+    StateNotifierProvider<LockedNoteNotifier, List<Note>>(
+  (ref) => LockedNoteNotifier(),
+);
+
+class DeletedNoteNotifier extends StateNotifier<List<Note>> {
+  DeletedNoteNotifier() : super([]);
+
+  void update(Note note) {
+    state = [...state, note];
+  }
+
+  void delete(Note note) {
+    state.remove(note);
+    state = [...state];
+  }
+}
+
+final deletedNoteProvider =
+    StateNotifierProvider<DeletedNoteNotifier, List<Note>>(
+  (ref) => DeletedNoteNotifier(),
 );

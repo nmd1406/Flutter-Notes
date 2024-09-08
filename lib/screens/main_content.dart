@@ -21,37 +21,35 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
   bool isSelectAll = false;
   String screenTitle = 'Tất cả ghi chú';
 
-  void noteLocker(WidgetRef ref) {
+  void noteLocker() {
     final selectedNotes = ref.read(selectedNoteProvider);
     for (var note in selectedNotes) {
       ref.watch(notesProvider.notifier).toggleNoteLocker(note);
     }
 
-    ref
-        .watch(selectedNoteProvider.notifier)
-        .updateSelectedNotes(selectedNotes.toList());
+    ref.watch(selectedNoteProvider.notifier).updateSelectedNotes(selectedNotes);
+
+    final lockedNotes = ref.watch(notesProvider.notifier).getLockedNotes();
+    ref.read(lockedNoteProvider.notifier).update(lockedNotes);
   }
 
-  void notePin(WidgetRef ref) {
+  void notePin() {
     final selectedNotes = ref.read(selectedNoteProvider);
     for (var note in selectedNotes) {
       ref.watch(notesProvider.notifier).toggleNotePin(note);
     }
-
-    ref
-        .watch(selectedNoteProvider.notifier)
-        .updateSelectedNotes(selectedNotes.toList());
-  }
-
-  void drawerNoteFilter(List<Note> filteredNotes) {
-    setState(() {
-      displayingNotes = List.from(filteredNotes);
-    });
   }
 
   void toggleSelectAllNotes() {
-    final noteList =
-        displayingNotes.isEmpty ? ref.read(notesProvider) : displayingNotes;
+    List<Note> noteList = [];
+    if (screenTitle == 'Tất cả ghi chú') {
+      noteList = ref.read(notesProvider);
+    } else if (screenTitle == 'Ghi chú bị khoá') {
+      noteList = ref.read(lockedNoteProvider);
+    } else {
+      ref.read(deletedNoteProvider);
+    }
+
     final selectedNotes = ref.read(selectedNoteProvider);
 
     if (noteList.length == selectedNotes.length) {
@@ -69,29 +67,64 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
     }
   }
 
+  void turnOffMultiSelectNote() {
+    ref.watch(multipleSelectionFunctionProvider.notifier).toggle(false);
+    setState(() {
+      isSelectAll = false;
+    });
+  }
+
+  void moveNoteToBin() {
+    final selectedNotes = ref.read(selectedNoteProvider);
+    for (var note in selectedNotes) {
+      ref.watch(notesProvider.notifier).moveNoteToBin(note);
+      ref.watch(deletedNoteProvider.notifier).update(note);
+    }
+    // final deletedNotes = ref.watch(notesProvider.notifier).getDeletedNotes();
+  }
+
+  void restoreNote() {
+    final selectedNotes = ref.read(selectedNoteProvider);
+    for (var note in selectedNotes) {
+      ref.watch(notesProvider.notifier).restoreNote(note);
+      ref.watch(deletedNoteProvider.notifier).delete(note);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     int selectedNotesCount = ref.watch(selectedNoteProvider).length;
 
     final isMultipleSelectionVisible =
         ref.watch(multipleSelectionFunctionProvider);
-    final noteList = ref.watch(notesProvider);
+    final noteList =
+        ref.watch(notesProvider).where((note) => !note.isDeleted).toList();
+    final lockedNotes = ref.watch(lockedNoteProvider);
+    final deletedNotes = ref.watch(deletedNoteProvider);
 
-    Widget mainContent = const Center(
-      child: Text('Không có ghi chú nào ở đây'),
-    );
+    Widget mainContent = NoteList(noteList: noteList);
 
-    if (noteList.isNotEmpty) {
-      if (screenTitle == 'Tất cả ghi chú') {
-        mainContent = NoteList(noteList: noteList);
+    if (screenTitle == 'Tất cả ghi chú') {
+      if (noteList.isEmpty) {
+        mainContent = const Center(
+          child: Text('Không có ghi chú nào ở đây'),
+        );
+      }
+    } else if (screenTitle == 'Ghi chú bị khoá') {
+      if (lockedNotes.isEmpty) {
+        mainContent = const Center(
+          child: Text('Không có ghi chú nào ở đây'),
+        );
       } else {
-        if (displayingNotes.isEmpty) {
-          mainContent = const Center(
-            child: Text('Trống'),
-          );
-        } else {
-          mainContent = NoteList(noteList: displayingNotes);
-        }
+        mainContent = NoteList(noteList: lockedNotes);
+      }
+    } else if (screenTitle == 'Thùng rác') {
+      if (deletedNotes.isEmpty) {
+        mainContent = const Center(
+          child: Text('Không có ghi chú nào ở đây'),
+        );
+      } else {
+        mainContent = NoteList(noteList: deletedNotes);
       }
     }
 
@@ -133,11 +166,6 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
             IconButton(
               tooltip: 'Tìm kiếm',
               onPressed: () {
-                // Navigator.of(context).push(
-                //   MaterialPageRoute(
-                //     builder: (context) => const SearchScreen(),
-                //   ),
-                // );
                 showSearch(
                   context: context,
                   delegate: SearchScreen(noteList),
@@ -166,10 +194,11 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
           : MainDrawer(
               noteCount: noteList.length,
               lockedNoteCount: noteList.where((note) => note.isLocked).length,
-              deletedNoteCount: 0,
-              onChangeNoteList: drawerNoteFilter,
+              deletedNoteCount: deletedNotes.length,
               onChangeTitle: (String changedTitle) {
-                screenTitle = changedTitle;
+                setState(() {
+                  screenTitle = changedTitle;
+                });
               },
             ),
       floatingActionButton: Visibility(
@@ -191,28 +220,85 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
         ),
       ),
       bottomNavigationBar: isMultipleSelectionVisible && selectedNotesCount > 0
-          ? NavigationBar(
-              destinations: [
-                TextButton.icon(
-                  onPressed: () {
-                    noteLocker(ref);
-                  },
-                  icon: const Icon(Icons.lock),
-                  label: const Text('Khoá'),
-                ),
-                TextButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.delete),
-                  label: const Text('Xoá'),
-                ),
-                TextButton.icon(
-                  onPressed: () {
-                    notePin(ref);
-                  },
-                  icon: const Icon(Icons.push_pin),
-                  label: const Text('Ghim'),
-                )
-              ],
+          ? Container(
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      spreadRadius: 7.4,
+                      blurRadius: 11,
+                    )
+                  ]),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  if (screenTitle != 'Thùng rác')
+                    TextButton.icon(
+                      onPressed: () {
+                        noteLocker();
+                        turnOffMultiSelectNote();
+                      },
+                      icon: const Icon(Icons.lock),
+                      label: Text(
+                        screenTitle == 'Tất cả ghi chú' ? 'Khoá' : 'Mở khoá',
+                      ),
+                    ),
+                  if (screenTitle != 'Ghi chú bị khoá')
+                    TextButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Xác nhận'),
+                            content: const Text(
+                                'Ghi chú sẽ được đưa vào thùng rác và sẽ bị xoá vĩnh viễn sau 30 ngày.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  moveNoteToBin();
+                                  turnOffMultiSelectNote();
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text('OK'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text('Huỷ'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.delete),
+                      label: Text(
+                        screenTitle == 'Thùng rác' ? 'Xoá vĩnh viễn' : 'Xoá',
+                      ),
+                    ),
+                  if (screenTitle == 'Thùng rác')
+                    TextButton.icon(
+                      onPressed: () {
+                        restoreNote();
+                        turnOffMultiSelectNote();
+                      },
+                      icon: const Icon(Icons.restore_from_trash_rounded),
+                      label: const Text('Khôi phục'),
+                    ),
+                  if (screenTitle == 'Tất cả ghi chú')
+                    TextButton.icon(
+                      onPressed: () {
+                        notePin();
+                        turnOffMultiSelectNote();
+                      },
+                      icon: const Icon(Icons.push_pin),
+                      label: const Text('Ghim'),
+                    )
+                ],
+              ),
             )
           : null,
     );
