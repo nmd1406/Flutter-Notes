@@ -1,13 +1,14 @@
-import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
-const uuid = Uuid();
 final simpleFormatter = DateFormat('dd/MM/yyyy');
 final detailFormatter = DateFormat('HH:ss dd/MM/yyyy');
+const uuid = Uuid();
 
 class Note {
-  final String id;
+  String id;
   String title;
   String content;
   final DateTime dateCreated;
@@ -16,7 +17,7 @@ class Note {
   bool isPinned;
   bool isSelected;
   bool isDeleted;
-  final List<PlatformFile> files;
+  final List<File> files;
   String? address;
 
   Note({
@@ -29,6 +30,19 @@ class Note {
         isPinned = false,
         isSelected = false,
         isDeleted = false;
+
+  Note.databaseConstructor({
+    required this.id,
+    required this.title,
+    required this.content,
+    required this.dateCreated,
+    required this.dateEdited,
+    required this.files,
+    required this.isLocked,
+    required this.isPinned,
+    required this.isSelected,
+    required this.isDeleted,
+  });
 
   String getSimpleDate(DateTime date) {
     return simpleFormatter.format(date);
@@ -62,7 +76,7 @@ class Note {
     isSelected = !isSelected;
   }
 
-  void updateNoteFiles(List<PlatformFile> files) {
+  void updateNoteFiles(List<File> files) {
     this.files.addAll(files);
   }
 

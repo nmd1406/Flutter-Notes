@@ -1,11 +1,16 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
 
 import 'package:notes/providers/notes_provider.dart';
 import 'package:notes/widgets/file_view/files_grid_view.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
 class NewNoteScreen extends ConsumerStatefulWidget {
   const NewNoteScreen({super.key});
@@ -17,10 +22,7 @@ class NewNoteScreen extends ConsumerStatefulWidget {
 class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
-  final List<PlatformFile> _pickedFiles = [];
-  late double _latitude;
-  late double _longitude;
-  String? _address;
+  List<File> _pickedFiles = [];
 
   @override
   void dispose() {
@@ -29,7 +31,7 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
     super.dispose();
   }
 
-  void _saveNewNote() {
+  void _saveNewNote() async {
     String enteredTitle = _titleController.text.trim().isEmpty
         ? 'Tiêu đề'
         : _titleController.text.trim();
@@ -37,15 +39,25 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
         _contentController.text.trim().isEmpty ? '' : _contentController.text;
     DateTime date = DateTime.now();
 
-    ref.watch(notesProvider.notifier).addNewNote(
-        enteredTitle, enteredContent, date, _pickedFiles.toList(), _address);
+    List<File> saveFiles = [];
+    for (var file in _pickedFiles) {
+      final newFile = await _saveFile(file);
+      saveFiles.add(newFile);
+    }
+
+    ref
+        .watch(notesProvider.notifier)
+        .addNewNote(enteredTitle, enteredContent, date, saveFiles);
 
     setState(() {
       _pickedFiles.clear();
-      _address = null;
     });
 
-    Navigator.of(context).pop();
+    if (context.mounted) {
+      Navigator.of(context).pop();
+    } else {
+      return;
+    }
   }
 
   void _pickFiles() async {
@@ -54,54 +66,22 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
       return;
     }
 
+    List<File> files = [];
+    for (var file in result.files) {
+      final newFile = File(file.path!);
+      files.add(newFile);
+    }
+
     setState(() {
-      _pickedFiles.addAll(result.files);
+      _pickedFiles.addAll(files);
     });
   }
 
-  Future<Position> _getCurrentPosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
+  Future<File> _saveFile(File file) async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final newFile = File('${appDir.path}/${path.basename(file.path)}');
 
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-
-    return await Geolocator.getCurrentPosition();
-  }
-
-  void _liveLocation() async {
-    LocationSettings locationSettings = const LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 10,
-    );
-
-    Geolocator.getPositionStream(locationSettings: locationSettings)
-        .listen((postion) {
-      setState(() {
-        _latitude = postion.latitude;
-        _longitude = postion.longitude;
-      });
-    });
-    final placemarks = await placemarkFromCoordinates(_latitude, _longitude);
-    setState(() {
-      _address =
-          "${placemarks[0].street}, ${placemarks[0].subAdministrativeArea}, ${placemarks[0].administrativeArea}, ${placemarks[0].country}";
-    });
+    return File(file.path).copy(newFile.path);
   }
 
   @override
@@ -119,19 +99,6 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
             onPressed: _pickFiles,
             icon: const Icon(Icons.attach_file_rounded),
           ),
-          IconButton(
-            tooltip: 'Vị trí của tôi',
-            onPressed: () {
-              _getCurrentPosition().then((location) {
-                setState(() {
-                  _latitude = location.latitude;
-                  _longitude = location.longitude;
-                });
-                _liveLocation();
-              });
-            },
-            icon: const Icon(Icons.location_on_outlined),
-          )
         ],
         title: TextField(
           controller: _titleController,
@@ -160,13 +127,10 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
                 hintText: 'Ghi chú ở đây...',
               ),
             ),
-            FileGridView(files: _pickedFiles.toList()),
+            FileGridView(
+              files: _pickedFiles,
+            ),
             const SizedBox(height: 50),
-            if (_address != null)
-              Text(
-                ('Vị trí hiện tại: $_address'),
-                style: Theme.of(context).textTheme.labelSmall,
-              )
           ],
         ),
       ),

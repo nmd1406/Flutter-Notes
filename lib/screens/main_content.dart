@@ -17,11 +17,17 @@ class MainContentScreen extends ConsumerStatefulWidget {
 }
 
 class _MainContentScreenState extends ConsumerState<MainContentScreen> {
-  List<Note> displayingNotes = [];
-  bool isSelectAll = false;
-  String screenTitle = 'Tất cả ghi chú';
+  bool _isSelectAll = false;
+  String _screenTitle = 'Tất cả ghi chú';
+  late Future<void> _notesFuture;
 
-  void noteLocker() {
+  @override
+  void initState() {
+    super.initState();
+    _notesFuture = ref.read(notesProvider.notifier).loadNotes();
+  }
+
+  void _noteLocker() {
     final selectedNotes = ref.read(selectedNoteProvider);
     for (var note in selectedNotes) {
       ref.watch(notesProvider.notifier).toggleNoteLocker(note);
@@ -33,18 +39,18 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
     ref.read(lockedNoteProvider.notifier).update(lockedNotes);
   }
 
-  void notePin() {
+  void _notePin() {
     final selectedNotes = ref.read(selectedNoteProvider);
     for (var note in selectedNotes) {
       ref.watch(notesProvider.notifier).toggleNotePin(note);
     }
   }
 
-  void toggleSelectAllNotes() {
+  void _toggleSelectAllNotes() {
     List<Note> noteList = [];
-    if (screenTitle == 'Tất cả ghi chú') {
+    if (_screenTitle == 'Tất cả ghi chú') {
       noteList = ref.read(notesProvider);
-    } else if (screenTitle == 'Ghi chú bị khoá') {
+    } else if (_screenTitle == 'Ghi chú bị khoá') {
       noteList = ref.read(lockedNoteProvider);
     } else {
       ref.read(deletedNoteProvider);
@@ -56,37 +62,44 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
       ref.watch(selectedNoteProvider.notifier).deleteAllSelectedNote();
       ref.watch(notesProvider.notifier).unSelectNotes(noteList);
       setState(() {
-        isSelectAll = false;
+        _isSelectAll = false;
       });
     } else {
       ref.watch(selectedNoteProvider.notifier).updateSelectedNotes(noteList);
       ref.watch(notesProvider.notifier).selectNotes(noteList);
       setState(() {
-        isSelectAll = true;
+        _isSelectAll = true;
       });
     }
   }
 
-  void turnOffMultiSelectNote() {
+  void _turnOffMultiSelectNote() {
     ref.watch(multipleSelectionFunctionProvider.notifier).toggle(false);
     setState(() {
-      isSelectAll = false;
+      _isSelectAll = false;
     });
   }
 
-  void moveNoteToBin() {
+  void _moveNoteToBin() {
     final selectedNotes = ref.read(selectedNoteProvider);
     for (var note in selectedNotes) {
       ref.watch(notesProvider.notifier).moveNoteToBin(note);
       ref.watch(deletedNoteProvider.notifier).update(note);
     }
-    // final deletedNotes = ref.watch(notesProvider.notifier).getDeletedNotes();
   }
 
-  void restoreNote() {
+  void _restoreNote() {
     final selectedNotes = ref.read(selectedNoteProvider);
     for (var note in selectedNotes) {
       ref.watch(notesProvider.notifier).restoreNote(note);
+      ref.watch(deletedNoteProvider.notifier).delete(note);
+    }
+  }
+
+  void _deletePermanently() {
+    final selectedNotes = ref.read(selectedNoteProvider);
+    for (var note in selectedNotes) {
+      ref.watch(notesProvider.notifier).deletePermanently(note);
       ref.watch(deletedNoteProvider.notifier).delete(note);
     }
   }
@@ -104,13 +117,13 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
 
     Widget mainContent = NoteList(noteList: noteList);
 
-    if (screenTitle == 'Tất cả ghi chú') {
+    if (_screenTitle == 'Tất cả ghi chú') {
       if (noteList.isEmpty) {
         mainContent = const Center(
           child: Text('Không có ghi chú nào ở đây'),
         );
       }
-    } else if (screenTitle == 'Ghi chú bị khoá') {
+    } else if (_screenTitle == 'Ghi chú bị khoá') {
       if (lockedNotes.isEmpty) {
         mainContent = const Center(
           child: Text('Không có ghi chú nào ở đây'),
@@ -118,7 +131,7 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
       } else {
         mainContent = NoteList(noteList: lockedNotes);
       }
-    } else if (screenTitle == 'Thùng rác') {
+    } else if (_screenTitle == 'Thùng rác') {
       if (deletedNotes.isEmpty) {
         mainContent = const Center(
           child: Text('Không có ghi chú nào ở đây'),
@@ -136,9 +149,9 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
                   IconButton(
                     padding: EdgeInsets.zero,
                     onPressed: () {
-                      toggleSelectAllNotes();
+                      _toggleSelectAllNotes();
                     },
-                    icon: !isSelectAll
+                    icon: !_isSelectAll
                         ? const Icon(Icons.circle_outlined)
                         : const Icon(
                             Icons.check_circle,
@@ -156,7 +169,7 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
                 ],
               )
             : Text(
-                screenTitle,
+                _screenTitle,
                 style: Theme.of(context).textTheme.titleLarge!.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -180,7 +193,7 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
                     .watch(multipleSelectionFunctionProvider.notifier)
                     .toggle(false);
                 setState(() {
-                  isSelectAll = false;
+                  _isSelectAll = false;
                 });
               },
               icon: const Icon(Icons.close),
@@ -188,7 +201,13 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
           ]
         ],
       ),
-      body: mainContent,
+      body: FutureBuilder(
+        future: _notesFuture,
+        builder: (context, snapshot) =>
+            snapshot.connectionState == ConnectionState.waiting
+                ? const Center(child: CircularProgressIndicator())
+                : mainContent,
+      ),
       drawer: isMultipleSelectionVisible
           ? null
           : MainDrawer(
@@ -197,12 +216,13 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
               deletedNoteCount: deletedNotes.length,
               onChangeTitle: (String changedTitle) {
                 setState(() {
-                  screenTitle = changedTitle;
+                  _screenTitle = changedTitle;
                 });
               },
             ),
       floatingActionButton: Visibility(
-        visible: !isMultipleSelectionVisible && screenTitle == 'Tất cả ghi chú',
+        visible:
+            !isMultipleSelectionVisible && _screenTitle == 'Tất cả ghi chú',
         child: FloatingActionButton(
           onPressed: () {
             Navigator.of(context).push(
@@ -235,18 +255,18 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  if (screenTitle != 'Thùng rác')
+                  if (_screenTitle != 'Thùng rác')
                     TextButton.icon(
                       onPressed: () {
-                        noteLocker();
-                        turnOffMultiSelectNote();
+                        _noteLocker();
+                        _turnOffMultiSelectNote();
                       },
                       icon: const Icon(Icons.lock),
                       label: Text(
-                        screenTitle == 'Tất cả ghi chú' ? 'Khoá' : 'Mở khoá',
+                        _screenTitle == 'Tất cả ghi chú' ? 'Khoá' : 'Mở khoá',
                       ),
                     ),
-                  if (screenTitle != 'Ghi chú bị khoá')
+                  if (_screenTitle != 'Ghi chú bị khoá')
                     TextButton.icon(
                       onPressed: () {
                         showDialog(
@@ -258,8 +278,12 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
                             actions: [
                               TextButton(
                                 onPressed: () {
-                                  moveNoteToBin();
-                                  turnOffMultiSelectNote();
+                                  if (_screenTitle != 'Thùng rác') {
+                                    _moveNoteToBin();
+                                  } else {
+                                    _deletePermanently();
+                                  }
+                                  _turnOffMultiSelectNote();
                                   Navigator.of(context).pop();
                                 },
                                 child: const Text('OK'),
@@ -276,23 +300,23 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
                       },
                       icon: const Icon(Icons.delete),
                       label: Text(
-                        screenTitle == 'Thùng rác' ? 'Xoá vĩnh viễn' : 'Xoá',
+                        _screenTitle == 'Thùng rác' ? 'Xoá vĩnh viễn' : 'Xoá',
                       ),
                     ),
-                  if (screenTitle == 'Thùng rác')
+                  if (_screenTitle == 'Thùng rác')
                     TextButton.icon(
                       onPressed: () {
-                        restoreNote();
-                        turnOffMultiSelectNote();
+                        _restoreNote();
+                        _turnOffMultiSelectNote();
                       },
                       icon: const Icon(Icons.restore_from_trash_rounded),
                       label: const Text('Khôi phục'),
                     ),
-                  if (screenTitle == 'Tất cả ghi chú')
+                  if (_screenTitle == 'Tất cả ghi chú')
                     TextButton.icon(
                       onPressed: () {
-                        notePin();
-                        turnOffMultiSelectNote();
+                        _notePin();
+                        _turnOffMultiSelectNote();
                       },
                       icon: const Icon(Icons.push_pin),
                       label: const Text('Ghim'),

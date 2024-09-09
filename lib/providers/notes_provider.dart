@@ -1,12 +1,20 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:notes/models/note.dart';
+import 'package:notes/services/database_service.dart';
+
+final DatabaseService _databaseService = DatabaseService.instance;
 
 class NotesNotifier extends StateNotifier<List<Note>> {
   NotesNotifier() : super([]);
 
-  void addNewNote(String title, String content, DateTime date,
-      List<PlatformFile> files, String? address) {
+  Future<void> loadNotes() async {
+    state = await _databaseService.getNotes();
+  }
+
+  void addNewNote(
+      String title, String content, DateTime date, List<File> files) {
     Note newNote = Note(
       title: title,
       content: content,
@@ -14,15 +22,12 @@ class NotesNotifier extends StateNotifier<List<Note>> {
       files: files,
     );
 
-    if (address != null) {
-      newNote.updateAddress(address);
-    }
-
+    _databaseService.addNewNote(newNote);
     state = [...state, newNote];
   }
 
   void saveEditedNote(Note note, String title, String content,
-      DateTime dateEdited, List<PlatformFile> files) {
+      DateTime dateEdited, List<File> files) {
     List<Note> notes = state;
     int index = notes.indexOf(note);
     notes[index].setNewContent(content);
@@ -30,6 +35,7 @@ class NotesNotifier extends StateNotifier<List<Note>> {
     notes[index].setDateEdited(dateEdited);
     notes[index].updateNoteFiles(files);
 
+    _databaseService.updateNote(note);
     state = [...notes];
   }
 
@@ -37,6 +43,8 @@ class NotesNotifier extends StateNotifier<List<Note>> {
     List<Note> notes = state;
     int index = notes.indexOf(note);
     notes[index].toggleNoteLocker();
+
+    _databaseService.updateNote(note);
     state = [...notes];
   }
 
@@ -44,6 +52,8 @@ class NotesNotifier extends StateNotifier<List<Note>> {
     List<Note> notes = state;
     int index = notes.indexOf(note);
     notes[index].isSelected = !notes[index].isSelected;
+
+    _databaseService.updateNote(note);
     state = [...notes];
   }
 
@@ -51,6 +61,7 @@ class NotesNotifier extends StateNotifier<List<Note>> {
     for (var note in notes) {
       int index = state.indexOf(note);
       state[index].isSelected = true;
+      _databaseService.updateNote(state[index]);
     }
 
     state = [...state];
@@ -60,6 +71,7 @@ class NotesNotifier extends StateNotifier<List<Note>> {
     for (var note in notes) {
       int index = state.indexOf(note);
       state[index].isSelected = false;
+      _databaseService.updateNote(state[index]);
     }
 
     state = [...state];
@@ -68,6 +80,7 @@ class NotesNotifier extends StateNotifier<List<Note>> {
   void toggleNotePin(Note note) {
     int index = state.indexOf(note);
     state[index].toggleNotePin();
+    _databaseService.updateNote(state[index]);
     if (state[index].isPinned) {
       Note noteCopy = state[index];
       state.removeAt(index);
@@ -77,12 +90,6 @@ class NotesNotifier extends StateNotifier<List<Note>> {
       state.removeAt(index);
       state = [...state, noteCopy];
     }
-  }
-
-  void updateUserLocation(Note note, String address) {
-    int index = state.indexOf(note);
-    state[index].updateAddress(address);
-    state = [...state];
   }
 
   List<Note> getLockedNotes() {
@@ -98,12 +105,23 @@ class NotesNotifier extends StateNotifier<List<Note>> {
     state[index].isDeleted = true;
     state[index].isPinned = false;
     state[index].isLocked = false;
+
+    _databaseService.updateNote(state[index]);
     state = [...state];
   }
 
   void restoreNote(Note note) {
     int index = state.indexOf(note);
     state[index].isDeleted = false;
+
+    _databaseService.updateNote(state[index]);
+    state = [...state];
+  }
+
+  void deletePermanently(Note note) {
+    int index = state.indexOf(note);
+    state.removeAt(index);
+    _databaseService.deleteNote(note);
     state = [...state];
   }
 }
