@@ -29,7 +29,7 @@ class NoteDetailsScreen extends ConsumerStatefulWidget {
 class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
-  late List<File> _pickedFiles = [];
+  late final List<File> _files = [...widget.note.files];
 
   @override
   void initState() {
@@ -54,22 +54,20 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
     DateTime date = DateTime.now();
 
     List<File> saveFiles = [];
-    for (var file in _pickedFiles) {
+    for (var file in _files) {
       final newFile = await _saveFile(file);
       saveFiles.add(newFile);
     }
 
-    ref.watch(notesProvider.notifier).saveEditedNote(
-          widget.note,
-          editedTitle,
-          editedContent,
-          date,
-          saveFiles,
-        );
-
-    setState(() {
-      _pickedFiles.clear();
-    });
+    if (widget.note.files.length != saveFiles.length) {
+      ref.watch(notesProvider.notifier).saveEditedNote(
+            widget.note,
+            editedTitle,
+            editedContent,
+            date,
+            saveFiles,
+          );
+    }
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).clearSnackBars();
@@ -98,7 +96,7 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
     }
 
     setState(() {
-      _pickedFiles.addAll(files);
+      _files.addAll(files);
     });
   }
 
@@ -107,6 +105,12 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
     final newFile = File('${appDir.path}/${path.basename(file.path)}');
 
     return File(file.path).copy(newFile.path);
+  }
+
+  void _deleteFile(File file) {
+    setState(() {
+      _files.remove(file);
+    });
   }
 
   @override
@@ -159,14 +163,10 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
                 hintText: 'Ghi chú ở đây...',
               ),
             ),
-            if (_pickedFiles.isNotEmpty)
-              FileGridView(
-                files: [...widget.note.files, ..._pickedFiles],
-              )
-            else
-              FileGridView(
-                files: widget.note.files,
-              ),
+            FileGridView(
+              files: _files,
+              onDeleteFile: _deleteFile,
+            ),
             const SizedBox(height: 30),
           ],
         ),

@@ -52,9 +52,7 @@ class FileGridViewItem extends StatelessWidget {
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
               onTap: _openFile,
-              child: Container(
-                alignment: Alignment.center,
-                width: double.infinity,
+              child: Center(
                 child: Text(
                   fileExtension,
                   style: Theme.of(context).textTheme.headlineMedium!.copyWith(

@@ -17,7 +17,7 @@ class Note {
   bool isPinned;
   bool isSelected;
   bool isDeleted;
-  final List<File> files;
+  List<File> files;
   String? address;
 
   Note({
@@ -77,7 +77,7 @@ class Note {
   }
 
   void updateNoteFiles(List<File> files) {
-    this.files.addAll(files);
+    this.files = files;
   }
 
   void updateAddress(String address) {

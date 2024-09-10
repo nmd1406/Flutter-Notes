@@ -84,6 +84,12 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
     return File(file.path).copy(newFile.path);
   }
 
+  void _deleteFile(File file) {
+    setState(() {
+      _pickedFiles.remove(file);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,6 +135,7 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
             ),
             FileGridView(
               files: _pickedFiles,
+              onDeleteFile: _deleteFile,
             ),
             const SizedBox(height: 50),
           ],
