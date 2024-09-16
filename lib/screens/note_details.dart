@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 import 'package:notes/models/note.dart';
 import 'package:notes/providers/notes_provider.dart';
@@ -28,7 +29,7 @@ class NoteDetailsScreen extends ConsumerStatefulWidget {
 
 class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
   late TextEditingController _titleController;
-  late TextEditingController _contentController;
+  late quill.QuillController _contentController;
   final _searchController = TextEditingController();
   bool _isSearching = false;
   String _searchQuery = '';
@@ -38,7 +39,11 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.note.title);
-    _contentController = TextEditingController(text: widget.note.content);
+    final doc = quill.Document()..insert(0, widget.note.content);
+    _contentController = quill.QuillController(
+      document: doc,
+      selection: const TextSelection.collapsed(offset: 0),
+    );
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
@@ -57,8 +62,8 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
     String editedTitle = _titleController.text.trim().isEmpty
         ? 'Tiêu đề'
         : _titleController.text.trim();
-    String editedContent =
-        _contentController.text.trim().isEmpty ? '' : _contentController.text;
+    String plainText = _contentController.document.toPlainText();
+    String editedContent = plainText.trim().isEmpty ? '' : plainText;
     DateTime date = DateTime.now();
 
     List<File> saveFiles = [];
@@ -160,26 +165,22 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
   }
 
   Widget _buildHighlightedText() {
-    String text = _contentController.text;
+    String text = _contentController.document.toPlainText();
     if (_searchQuery.isEmpty) {
-      return TextField(
-        autocorrect: false,
+      return quill.QuillEditor.basic(
         controller: _contentController,
-        textCapitalization: TextCapitalization.sentences,
-        maxLength: 1024,
-        maxLines: null,
-        cursorColor: Colors.red,
-        buildCounter: (
-          context, {
-          int? currentLength,
-          bool? isFocused,
-          int? maxLength,
-        }) =>
-            null,
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.all(15),
-          hintText: 'Ghi chú ở đây...',
+        configurations: quill.QuillEditorConfigurations(
+          padding: const EdgeInsets.all(15),
+          placeholder: 'Ghi chú ở đây...',
+          customStyles: quill.DefaultStyles(
+            placeHolder: quill.DefaultTextBlockStyle(
+              Theme.of(context).textTheme.bodyLarge!,
+              quill.HorizontalSpacing.zero,
+              quill.VerticalSpacing.zero,
+              quill.VerticalSpacing.zero,
+              null,
+            ),
+          ),
         ),
       );
     }
@@ -233,6 +234,7 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: _isSearching
             ? TapRegion(
@@ -277,6 +279,26 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
             ),
             const SizedBox(height: 30),
           ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: MediaQuery.of(context).viewInsets,
+        child: quill.QuillSimpleToolbar(
+          controller: _contentController,
+          configurations: const quill.QuillSimpleToolbarConfigurations(
+            multiRowsDisplay: false,
+            showFontFamily: false,
+            showInlineCode: false,
+            showCodeBlock: false,
+            showSearchButton: false,
+            showLink: false,
+            showQuote: false,
+            showStrikeThrough: false,
+            showClearFormat: false,
+            showClipboardPaste: false,
+            showClipboardCopy: false,
+            showClipboardCut: false,
+          ),
         ),
       ),
     );
