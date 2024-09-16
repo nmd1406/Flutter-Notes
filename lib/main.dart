@@ -26,8 +26,7 @@ class MyApp extends StatelessWidget {
         ),
         textButtonTheme: TextButtonThemeData(
           style: const ButtonStyle().copyWith(
-            foregroundColor:
-                const MaterialStatePropertyAll<Color>(Colors.black),
+            foregroundColor: const WidgetStatePropertyAll<Color>(Colors.black),
           ),
         ),
       ),
