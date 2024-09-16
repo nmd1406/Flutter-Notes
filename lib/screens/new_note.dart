@@ -22,7 +22,7 @@ class NewNoteScreen extends ConsumerStatefulWidget {
 class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
-  List<File> _pickedFiles = [];
+  final List<File> _pickedFiles = [];
 
   @override
   void dispose() {
