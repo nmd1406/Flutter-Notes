@@ -108,6 +108,10 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
         ],
         title: TextField(
           controller: _titleController,
+          textCapitalization: TextCapitalization.sentences,
+          style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
           decoration: const InputDecoration(
             hintText: 'Tiêu đề',
             border: InputBorder.none,
