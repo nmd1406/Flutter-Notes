@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:notes/services/database_service.dart' as database;
+
+final db = database.DatabaseService.instance;
 
 class MainDrawer extends ConsumerWidget {
   final int noteCount;
@@ -101,6 +104,13 @@ class MainDrawer extends ConsumerWidget {
                     Scaffold.of(context).closeDrawer();
                   }
                 },
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () {
+                  db.emptyTable();
+                },
+                child: const Text('Reset'),
               ),
             ],
           ),
