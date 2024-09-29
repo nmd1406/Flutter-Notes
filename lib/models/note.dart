@@ -11,6 +11,7 @@ class Note {
   String id;
   String title;
   String content;
+  String? quillState;
   final DateTime dateCreated;
   DateTime? dateEdited;
   bool isLocked;
@@ -23,6 +24,7 @@ class Note {
   Note({
     required this.title,
     required this.content,
+    required this.quillState,
     required this.dateCreated,
     required this.files,
   })  : id = uuid.v4(),
@@ -35,6 +37,7 @@ class Note {
     required this.id,
     required this.title,
     required this.content,
+    required this.quillState,
     required this.dateCreated,
     required this.dateEdited,
     required this.files,
@@ -62,6 +65,10 @@ class Note {
 
   void setNewContent(String content) {
     this.content = content;
+  }
+
+  void setQuillState(String quillState) {
+    this.quillState = quillState;
   }
 
   void toggleNoteLocker() {

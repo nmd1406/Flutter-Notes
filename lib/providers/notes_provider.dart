@@ -10,29 +10,26 @@ class NotesNotifier extends StateNotifier<List<Note>> {
   NotesNotifier() : super([]);
 
   Future<void> loadNotes() async {
+    // _databaseService.deleteDb();
     state = await _databaseService.getNotes();
   }
 
-  void addNewNote(
-      String title, String content, DateTime date, List<File> files) {
-    Note newNote = Note(
-      title: title,
-      content: content,
-      dateCreated: date,
-      files: files,
-    );
-
+  void addNewNote(Note newNote, List<File> files) {
+    newNote.updateNoteFiles(files);
+    print(newNote.files.length);
     _databaseService.addNewNote(newNote);
     state = [...state, newNote];
   }
 
   void saveEditedNote(Note note, String title, String content,
-      DateTime dateEdited, List<File> files) {
+      String quillState, DateTime dateEdited, List<File> files) {
     List<Note> notes = state;
     int index = notes.indexOf(note);
     notes[index].setNewContent(content);
+    notes[index].setQuillState(quillState);
     notes[index].setNewTitle(title);
     notes[index].setDateEdited(dateEdited);
+
     notes[index].updateNoteFiles(files);
 
     _databaseService.updateNote(note);

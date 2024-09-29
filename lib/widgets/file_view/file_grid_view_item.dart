@@ -21,8 +21,8 @@ class FileGridViewItem extends StatelessWidget {
     required this.file,
   });
 
-  void _openFile() {
-    OpenFile.open(file.path);
+  void _openFile() async {
+    await OpenFile.open(file.path);
   }
 
   @override

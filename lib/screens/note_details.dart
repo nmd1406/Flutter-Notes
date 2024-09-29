@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -38,12 +39,9 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
   @override
   void initState() {
     super.initState();
+
     _titleController = TextEditingController(text: widget.note.title);
-    final doc = quill.Document()..insert(0, widget.note.content);
-    _contentController = quill.QuillController(
-      document: doc,
-      selection: const TextSelection.collapsed(offset: 0),
-    );
+    _loadQuillState();
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
@@ -55,32 +53,44 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
   void dispose() {
     _titleController.dispose();
     _contentController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  void _loadQuillState() {
+    if (widget.note.quillState != null) {
+      final doc = quill.Document.fromJson(jsonDecode(widget.note.quillState!));
+      _contentController = quill.QuillController(
+        document: doc,
+        selection: const TextSelection.collapsed(offset: 0),
+      );
+    } else {
+      _contentController = quill.QuillController.basic();
+    }
   }
 
   void _saveEditedNote() async {
     String editedTitle = _titleController.text.trim().isEmpty
         ? 'Tiêu đề'
         : _titleController.text.trim();
-    String plainText = _contentController.document.toPlainText();
-    String editedContent = plainText.trim().isEmpty ? '' : plainText;
+    String plainText = _contentController.document.toPlainText().trim();
+    String editedContent = plainText.isEmpty ? '' : plainText;
+    String quillState =
+        jsonEncode(_contentController.document.toDelta().toJson());
     DateTime date = DateTime.now();
 
-    List<File> saveFiles = [];
     for (var file in _files) {
-      final newFile = await _saveFile(file);
-      saveFiles.add(newFile);
+      await _saveFile(file);
     }
 
-    if (widget.note.files.length != saveFiles.length) {
-      ref.watch(notesProvider.notifier).saveEditedNote(
-            widget.note,
-            editedTitle,
-            editedContent,
-            date,
-            saveFiles,
-          );
-    }
+    ref.watch(notesProvider.notifier).saveEditedNote(
+          widget.note,
+          editedTitle,
+          editedContent,
+          quillState,
+          date,
+          _files,
+        );
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).clearSnackBars();
@@ -114,10 +124,18 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
   }
 
   Future<File> _saveFile(File file) async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final newFile = File('${appDir.path}/${path.basename(file.path)}');
+    final appDir = await getExternalStorageDirectory();
+    final dirPath = '${appDir!.path}/${widget.note.id}';
+    final newFilePath =
+        '${appDir.path}/${widget.note.id}/${path.basename(file.path)}';
 
-    return File(file.path).copy(newFile.path);
+    final dir = Directory(dirPath);
+    if (!(await dir.exists())) {
+      await dir.create(recursive: true);
+    }
+
+    final copiedFile = await file.copy(newFilePath);
+    return copiedFile;
   }
 
   void _deleteFile(File file) {

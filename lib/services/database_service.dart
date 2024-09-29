@@ -14,6 +14,7 @@ class DatabaseService {
   final String _idColumn = 'id';
   final String _titleColumn = 'title';
   final String _contentColumn = 'content';
+  final String _quillStateColumn = 'quillState';
   final String _dateCreatedColumn = 'dateCreated';
   final String _dateEditedColumn = 'dateEdited';
   final String _isLockedColumn = 'isLocked';
@@ -40,10 +41,11 @@ class DatabaseService {
       version: 1,
       onCreate: (db, version) {
         db.execute('''
-          create table $_tableName (
+          create table if not exists $_tableName (
             $_idColumn text primary key,
             $_titleColumn text,
             $_contentColumn text,
+            $_quillStateColumn text,
             $_dateCreatedColumn text,
             $_dateEditedColumn text,
             $_isLockedColumn integer,
@@ -80,6 +82,7 @@ class DatabaseService {
         _idColumn: note.id,
         _titleColumn: note.title,
         _contentColumn: note.content,
+        _quillStateColumn: note.quillState,
         _dateCreatedColumn: note.dateCreated.toString(),
         _dateEditedColumn: '',
         _isLockedColumn: 0,
@@ -99,6 +102,7 @@ class DatabaseService {
       {
         _titleColumn: note.title,
         _contentColumn: note.content,
+        _quillStateColumn: note.quillState,
         _dateEditedColumn: note.dateEdited.toString(),
         _isLockedColumn: note.isLocked ? 1 : 0,
         _isPinnedColumn: note.isPinned ? 1 : 0,
@@ -124,6 +128,12 @@ class DatabaseService {
   void emptyTable() async {
     final db = await database;
     await db.delete(_tableName);
+    await getNotes();
+  }
+
+  void deleteDb() async {
+    String path = join(await getDatabasesPath(), "note_db.db");
+    await deleteDatabase(path);
   }
 
   Future<List<Note>> getNotes() async {
@@ -140,6 +150,7 @@ class DatabaseService {
         id: note[_idColumn] as String,
         title: note[_titleColumn] as String,
         content: note[_contentColumn] as String,
+        quillState: note[_quillStateColumn] as String,
         dateCreated: DateTime.parse(note[_dateCreatedColumn] as String),
         dateEdited: (note[_dateEditedColumn] as String).isEmpty
             ? null
