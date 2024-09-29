@@ -21,13 +21,22 @@ class NoteGridViewItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(15),
             child: Stack(
               children: [
-                SizedBox(
+                Container(
                   width: double.infinity,
                   height: double.infinity,
+                  decoration: const BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 20,
+                        spreadRadius: 7,
+                        offset: ui.Offset(-10, 5),
+                      ),
+                    ],
+                  ),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(19),
                     child: Card(
-                      elevation: 4,
                       color: Colors.yellow,
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
