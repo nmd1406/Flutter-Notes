@@ -10,10 +10,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:notes/providers/notes_provider.dart';
 import 'package:notes/widgets/file_view/files_grid_view.dart';
 import 'package:notes/models/note.dart';
+
+const uuid = Uuid();
 
 class NewNoteScreen extends ConsumerStatefulWidget {
   const NewNoteScreen({super.key});
@@ -58,29 +61,30 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
     String quillState =
         jsonEncode(_contentController.document.toDelta().toJson());
 
+    String id = uuid.v4();
+
+    List<File> savedFiles = [];
+    for (int i = 0; i < _pickedFiles.length; ++i) {
+      File savedFile = await _saveFile(_pickedFiles[i], id);
+      savedFiles.add(savedFile);
+    }
+
     Note newNote = Note(
+      id: uuid.v4(),
       title: enteredTitle,
       content: enteredContent,
       quillState: quillState,
       dateCreated: date,
-      files: [],
+      files: savedFiles,
     );
-
-    for (var file in _pickedFiles) {
-      file = await _saveFile(file, newNote.id);
-    }
 
     ref.watch(notesProvider.notifier).addNewNote(newNote, _pickedFiles);
 
-    setState(() {
-      _pickedFiles.clear();
-    });
-
     if (context.mounted) {
       Navigator.of(context).pop();
-    } else {
-      return;
     }
+
+    return;
   }
 
   void _pickFiles() async {
@@ -106,11 +110,10 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
     final newFilePath = '${appDir.path}/$noteId/${path.basename(file.path)}';
 
     final dir = Directory(dirPath);
-    if (!(await dir.exists())) {
-      await dir.create(recursive: true);
-    }
+    await dir.create(recursive: true);
 
-    return await file.copy(newFilePath);
+    final copiedFile = await file.copy(newFilePath);
+    return copiedFile;
   }
 
   void _deleteFile(File file) {

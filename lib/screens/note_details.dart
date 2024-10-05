@@ -79,8 +79,9 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
         jsonEncode(_contentController.document.toDelta().toJson());
     DateTime date = DateTime.now();
 
-    for (var file in _files) {
-      await _saveFile(file);
+    for (int i = 0; i < _files.length; ++i) {
+      File savedFile = await _saveFile(_files[i]);
+      _files[i] = savedFile;
     }
 
     ref.watch(notesProvider.notifier).saveEditedNote(

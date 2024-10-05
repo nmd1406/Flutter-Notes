@@ -15,8 +15,6 @@ class NotesNotifier extends StateNotifier<List<Note>> {
   }
 
   void addNewNote(Note newNote, List<File> files) {
-    newNote.updateNoteFiles(files);
-    print(newNote.files.length);
     _databaseService.addNewNote(newNote);
     state = [...state, newNote];
   }
