@@ -63,9 +63,10 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
 
     String id = uuid.v4();
 
+    List<File> savedFiles = [];
     for (int i = 0; i < _pickedFiles.length; ++i) {
       File savedFile = await _saveFile(_pickedFiles[i], id);
-      _pickedFiles[i] = savedFile;
+      savedFiles.add(savedFile);
     }
 
     Note newNote = Note(
@@ -74,19 +75,16 @@ class _NewNoteScreenState extends ConsumerState<NewNoteScreen> {
       content: enteredContent,
       quillState: quillState,
       dateCreated: date,
-      files: _pickedFiles,
+      files: savedFiles,
     );
-
-    print('after save');
-    for (var file in newNote.files) {
-      print(file.path);
-    }
 
     ref.watch(notesProvider.notifier).addNewNote(newNote, _pickedFiles);
 
-    setState(() {
-      _pickedFiles.clear();
-    });
+    if (context.mounted) {
+      Navigator.of(context).pop();
+    }
+
+    return;
   }
 
   void _pickFiles() async {

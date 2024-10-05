@@ -252,10 +252,6 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print('open');
-    for (var file in widget.note.files) {
-      print(file.path);
-    }
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
