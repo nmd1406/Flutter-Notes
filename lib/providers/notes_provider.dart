@@ -15,10 +15,11 @@ class NotesNotifier extends StateNotifier<List<Note>> {
   }
 
   void addNewNote(Note newNote, List<File> files) {
-    newNote.updateNoteFiles(files);
-    print(newNote.files.length);
+    print('add new note');
     _databaseService.addNewNote(newNote);
     state = [...state, newNote];
+    int index = state.indexOf(newNote);
+    print(state[index].files.length);
   }
 
   void saveEditedNote(Note note, String title, String content,

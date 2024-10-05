@@ -79,8 +79,9 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
         jsonEncode(_contentController.document.toDelta().toJson());
     DateTime date = DateTime.now();
 
-    for (var file in _files) {
-      await _saveFile(file);
+    for (int i = 0; i < _files.length; ++i) {
+      File savedFile = await _saveFile(_files[i]);
+      _files[i] = savedFile;
     }
 
     ref.watch(notesProvider.notifier).saveEditedNote(
@@ -251,6 +252,10 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('open');
+    for (var file in widget.note.files) {
+      print(file.path);
+    }
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(

@@ -1,11 +1,9 @@
 import 'dart:io';
 
 import 'package:intl/intl.dart';
-import 'package:uuid/uuid.dart';
 
 final simpleFormatter = DateFormat('dd/MM/yyyy');
 final detailFormatter = DateFormat('HH:ss dd/MM/yyyy');
-const uuid = Uuid();
 
 class Note {
   String id;
@@ -22,13 +20,13 @@ class Note {
   String? address;
 
   Note({
+    required this.id,
     required this.title,
     required this.content,
     required this.quillState,
     required this.dateCreated,
     required this.files,
-  })  : id = uuid.v4(),
-        isLocked = false,
+  })  : isLocked = false,
         isPinned = false,
         isSelected = false,
         isDeleted = false;
@@ -85,9 +83,5 @@ class Note {
 
   void updateNoteFiles(List<File> files) {
     this.files = files;
-  }
-
-  void updateAddress(String address) {
-    this.address = address;
   }
 }
