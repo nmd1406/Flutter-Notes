@@ -128,7 +128,6 @@ class DatabaseService {
   void emptyTable() async {
     final db = await database;
     await db.delete(_tableName);
-    await getNotes();
   }
 
   void deleteDb() async {

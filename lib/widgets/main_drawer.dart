@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
+
 import 'package:notes/services/database_service.dart' as database;
 
 final db = database.DatabaseService.instance;
 
-class MainDrawer extends ConsumerWidget {
+class MainDrawer extends StatelessWidget {
   final int noteCount;
   final int lockedNoteCount;
   final int deletedNoteCount;
@@ -20,7 +21,7 @@ class MainDrawer extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.82,
       child: Drawer(
@@ -108,7 +109,35 @@ class MainDrawer extends ConsumerWidget {
               const Spacer(),
               TextButton(
                 onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Xác nhận'),
+                      content:
+                          const Text('Toàn bộ dữ liệu sẽ bị xoá vĩnh viễn.'),
+                      actions: [
+                        ElevatedButton(
+                          onPressed: () {
+                            db.emptyTable();
+                            Phoenix.rebirth(context);
+                          },
+                          style: ButtonStyle(
+                            backgroundColor:
+                                WidgetStateProperty.all<Color>(Colors.red),
+                          ),
+                          child: const Text('Reset'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Huỷ'),
+                        ),
+                      ],
+                    ),
+                  );
                   db.emptyTable();
+                  Phoenix.rebirth(context);
                 },
                 child: const Text('Reset'),
               ),
