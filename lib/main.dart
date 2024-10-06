@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:notes/screens/main_content.dart';
 
 void main() {
   runApp(
-    const ProviderScope(
-      child: MyApp(),
+    ProviderScope(
+      child: Phoenix(
+        child: const MyApp(),
+      ),
     ),
   );
 }
