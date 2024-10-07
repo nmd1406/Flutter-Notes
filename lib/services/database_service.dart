@@ -17,6 +17,7 @@ class DatabaseService {
   final String _quillStateColumn = 'quillState';
   final String _dateCreatedColumn = 'dateCreated';
   final String _dateEditedColumn = 'dateEdited';
+  final String _dataDeletedColumn = 'dateDeleted';
   final String _isLockedColumn = 'isLocked';
   final String _isPinnedColumn = 'isPinned';
   final String _isSelectedColumn = 'isSelected';
@@ -48,6 +49,7 @@ class DatabaseService {
             $_quillStateColumn text,
             $_dateCreatedColumn text,
             $_dateEditedColumn text,
+            $_dataDeletedColumn text,
             $_isLockedColumn integer,
             $_isPinnedColumn integer,
             $_isSelectedColumn integer,
@@ -118,10 +120,28 @@ class DatabaseService {
   void deleteNote(Note note) async {
     final db = await database;
 
+    DateTime dateDeleted = DateTime.now();
+    await db.update(
+      _tableName,
+      {
+        _dataDeletedColumn: dateDeleted.toString(),
+      },
+    );
     await db.delete(
       _tableName,
       where: '$_idColumn = ?',
       whereArgs: [note.id],
+    );
+  }
+
+  void monthlyCleanUpNotes() async {
+    final db = await database;
+
+    final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
+    await db.delete(
+      _tableName,
+      where: '$_dataDeletedColumn < ?',
+      whereArgs: [thirtyDaysAgo.toString()],
     );
   }
 
