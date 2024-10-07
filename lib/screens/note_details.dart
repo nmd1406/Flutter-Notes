@@ -31,29 +31,21 @@ class NoteDetailsScreen extends ConsumerStatefulWidget {
 class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
   late TextEditingController _titleController;
   late quill.QuillController _contentController;
-  final _searchController = TextEditingController();
-  bool _isSearching = false;
-  String _searchQuery = '';
   late final List<File> _files = [...widget.note.files];
+  final _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
-
     _titleController = TextEditingController(text: widget.note.title);
     _loadQuillState();
-    _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text;
-      });
-    });
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _contentController.dispose();
-    _searchController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -146,20 +138,6 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
   }
 
   List<Widget> _buildActions() {
-    if (_isSearching) {
-      return [
-        CloseButton(
-          onPressed: () {
-            setState(() {
-              FocusManager.instance.primaryFocus?.unfocus();
-              _isSearching = false;
-              _searchController.clear();
-            });
-          },
-        )
-      ];
-    }
-
     return [
       IconButton(
         tooltip: 'Lưu thay đổi',
@@ -171,83 +149,7 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
         onPressed: _pickFiles,
         icon: const Icon(Icons.attach_file_rounded),
       ),
-      IconButton(
-        tooltip: 'Tìm kiếm',
-        onPressed: () {
-          setState(() {
-            _isSearching = true;
-          });
-        },
-        icon: const Icon(Icons.search),
-      ),
     ];
-  }
-
-  Widget _buildHighlightedText() {
-    String text = _contentController.document.toPlainText();
-    if (_searchQuery.isEmpty) {
-      return quill.QuillEditor.basic(
-        controller: _contentController,
-        configurations: quill.QuillEditorConfigurations(
-          padding: const EdgeInsets.all(15),
-          placeholder: 'Ghi chú ở đây...',
-          customStyles: quill.DefaultStyles(
-            placeHolder: quill.DefaultTextBlockStyle(
-              Theme.of(context).textTheme.bodyLarge!,
-              quill.HorizontalSpacing.zero,
-              quill.VerticalSpacing.zero,
-              quill.VerticalSpacing.zero,
-              null,
-            ),
-          ),
-        ),
-      );
-    }
-
-    List<TextSpan> spans = _getHighlightedTextSpans(text, _searchQuery);
-    return Container(
-      padding: const EdgeInsets.all(15),
-      child: RichText(
-        textAlign: TextAlign.left,
-        text: TextSpan(
-          children: spans,
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-      ),
-    );
-  }
-
-  List<TextSpan> _getHighlightedTextSpans(String text, String query) {
-    List<TextSpan> spans = [];
-    int start = 0;
-
-    while (true) {
-      final startIndex = text.toLowerCase().indexOf(query.toLowerCase(), start);
-
-      // If no more matches found, add the rest of the text
-      if (startIndex == -1) {
-        spans.add(TextSpan(text: text.substring(start)));
-        break;
-      }
-
-      // Add the text before the match
-      if (startIndex > start) {
-        spans.add(TextSpan(text: text.substring(start, startIndex)));
-      }
-
-      // Add the matched text (highlighted)
-      spans.add(
-        TextSpan(
-          text: text.substring(startIndex, startIndex + query.length),
-          style: const TextStyle(backgroundColor: Colors.yellow),
-        ),
-      );
-
-      // Update the start position
-      start = startIndex + query.length;
-    }
-
-    return spans;
   }
 
   @override
@@ -255,43 +157,41 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        title: _isSearching
-            ? TapRegion(
-                onTapOutside: (event) {
-                  setState(() {
-                    FocusManager.instance.primaryFocus?.unfocus();
-                    _isSearching = false;
-                    _searchController.clear();
-                  });
-                },
-                child: TextField(
-                  controller: _searchController,
-                  autocorrect: false,
-                  decoration: const InputDecoration(
-                    hintText: 'Nhập từ khoá',
-                    border: InputBorder.none,
-                  ),
-                ),
-              )
-            : TextField(
-                autocorrect: false,
-                controller: _titleController,
-                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: 'Tiêu đề',
-                ),
+        title: TextField(
+          autocorrect: false,
+          focusNode: _focusNode,
+          controller: _titleController,
+          style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                fontWeight: FontWeight.w500,
               ),
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            border: InputBorder.none,
+            hintText: 'Tiêu đề',
+          ),
+        ),
         actions: _buildActions(),
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHighlightedText(),
+            quill.QuillEditor.basic(
+              controller: _contentController,
+              configurations: quill.QuillEditorConfigurations(
+                padding: const EdgeInsets.all(15),
+                placeholder: 'Ghi chú ở đây...',
+                customStyles: quill.DefaultStyles(
+                  placeHolder: quill.DefaultTextBlockStyle(
+                    Theme.of(context).textTheme.bodyLarge!,
+                    quill.HorizontalSpacing.zero,
+                    quill.VerticalSpacing.zero,
+                    quill.VerticalSpacing.zero,
+                    null,
+                  ),
+                ),
+              ),
+            ),
             FileGridView(
               files: _files,
               onDeleteFile: _deleteFile,
@@ -309,7 +209,7 @@ class _NoteDetailsScreenState extends ConsumerState<NoteDetailsScreen> {
             showFontFamily: false,
             showInlineCode: false,
             showCodeBlock: false,
-            showSearchButton: false,
+            showSearchButton: true,
             showLink: false,
             showQuote: false,
             showStrikeThrough: false,
