@@ -28,9 +28,9 @@ void main() {
   );
 
   runApp(
-    ProviderScope(
-      child: Phoenix(
-        child: const MyApp(),
+    Phoenix(
+      child: const ProviderScope(
+        child: MyApp(),
       ),
     ),
   );
