@@ -273,8 +273,9 @@ class _MainContentScreenState extends ConsumerState<MainContentScreen> {
                           context: context,
                           builder: (context) => AlertDialog(
                             title: const Text('Xác nhận'),
-                            content: const Text(
-                                'Ghi chú sẽ được đưa vào thùng rác và sẽ bị xoá vĩnh viễn sau 30 ngày.'),
+                            content: Text(_screenTitle != 'Thùng rác'
+                                ? 'Ghi chú sẽ được đưa vào thùng rác và sẽ bị xoá vĩnh viễn sau 30 ngày.'
+                                : 'Ghi chú sẽ bị xoá vĩnh viễn.'),
                             actions: [
                               TextButton(
                                 onPressed: () {

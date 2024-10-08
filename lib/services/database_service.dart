@@ -17,7 +17,7 @@ class DatabaseService {
   final String _quillStateColumn = 'quillState';
   final String _dateCreatedColumn = 'dateCreated';
   final String _dateEditedColumn = 'dateEdited';
-  final String _dataDeletedColumn = 'dateDeleted';
+  final String _dateDeletedColumn = 'dateDeleted';
   final String _isLockedColumn = 'isLocked';
   final String _isPinnedColumn = 'isPinned';
   final String _isSelectedColumn = 'isSelected';
@@ -49,7 +49,7 @@ class DatabaseService {
             $_quillStateColumn text,
             $_dateCreatedColumn text,
             $_dateEditedColumn text,
-            $_dataDeletedColumn text,
+            $_dateDeletedColumn text,
             $_isLockedColumn integer,
             $_isPinnedColumn integer,
             $_isSelectedColumn integer,
@@ -124,11 +124,24 @@ class DatabaseService {
     await db.update(
       _tableName,
       {
-        _dataDeletedColumn: dateDeleted.toString(),
+        _dateDeletedColumn: dateDeleted.toString(),
       },
     );
     await db.delete(
       _tableName,
+      where: '$_idColumn = ?',
+      whereArgs: [note.id],
+    );
+  }
+
+  void restoreNote(Note note) async {
+    final db = await database;
+
+    await db.update(
+      _tableName,
+      {
+        _dateDeletedColumn: "",
+      },
       where: '$_idColumn = ?',
       whereArgs: [note.id],
     );
@@ -140,7 +153,7 @@ class DatabaseService {
     final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
     await db.delete(
       _tableName,
-      where: '$_dataDeletedColumn < ?',
+      where: '$_dateDeletedColumn < ? and $_dateCreatedColumn != ""',
       whereArgs: [thirtyDaysAgo.toString()],
     );
   }

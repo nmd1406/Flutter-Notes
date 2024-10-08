@@ -102,6 +102,7 @@ class NotesNotifier extends StateNotifier<List<Note>> {
     state[index].isLocked = false;
 
     _databaseService.updateNote(state[index]);
+
     state = [...state];
   }
 
@@ -110,6 +111,7 @@ class NotesNotifier extends StateNotifier<List<Note>> {
     state[index].isDeleted = false;
 
     _databaseService.updateNote(state[index]);
+    _databaseService.restoreNote(state[index]);
     state = [...state];
   }
 
