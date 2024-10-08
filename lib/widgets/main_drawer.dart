@@ -107,23 +107,32 @@ class MainDrawer extends StatelessWidget {
                 },
               ),
               const Spacer(),
-              TextButton(
+              TextButton.icon(
                 onPressed: () {
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: const Text('Xác nhận'),
-                      content:
-                          const Text('Toàn bộ dữ liệu sẽ bị xoá vĩnh viễn.'),
+                      title: Text(
+                        'Xác nhận',
+                        style: Theme.of(context).textTheme.headlineLarge,
+                      ),
+                      content: Text(
+                        'Toàn bộ dữ liệu sẽ bị xoá vĩnh viễn.',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
                       actions: [
                         ElevatedButton(
                           onPressed: () {
                             db.emptyTable();
                             Phoenix.rebirth(context);
                           },
-                          style: ButtonStyle(
+                          style: ElevatedButton.styleFrom().copyWith(
                             backgroundColor:
-                                WidgetStateProperty.all<Color>(Colors.red),
+                                const WidgetStatePropertyAll<Color>(Colors.red),
+                            foregroundColor:
+                                const WidgetStatePropertyAll<Color>(
+                                    Colors.white),
+                            elevation: const WidgetStatePropertyAll<double>(10),
                           ),
                           child: const Text('Reset'),
                         ),
@@ -136,10 +145,19 @@ class MainDrawer extends StatelessWidget {
                       ],
                     ),
                   );
-                  db.emptyTable();
-                  Phoenix.rebirth(context);
                 },
-                child: const Text('Reset'),
+                style: TextButton.styleFrom().copyWith(
+                  foregroundColor:
+                      const WidgetStatePropertyAll<Color>(Colors.red),
+                  padding: const WidgetStatePropertyAll<EdgeInsets>(
+                    EdgeInsets.all(20),
+                  ),
+                ),
+                icon: const Icon(Icons.restart_alt),
+                label: const Text(
+                  "Reset",
+                  style: TextStyle(fontSize: 20),
+                ),
               ),
             ],
           ),
